@@ -1,0 +1,438 @@
+{% block title %}{% if question %}تعديل سؤال{% else %}إضافة سؤال{% endif %} - {{ exam.title }}{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a href="{% url 'exam_edit' exam.pk %}" class="btn btn-light border rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+            <i class="bi bi-arrow-right"></i>
+        </a>
+        <div>
+            <h1 class="page-title mb-0">{% if question %}تعديل السؤال{% else %}إضافة سؤال جديد{% endif %}</h1>
+            <p class="text-muted small mb-0">{{ exam.title }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-4 p-md-5">
+                <form method="post" id="questionForm">
+                    {% csrf_token %}
+
+                    <!-- Question type selector -->
+                    <div class="mb-5">
+                        <label class="form-label fw-bold text-dark mb-3">نوع السؤال <span class="text-danger">*</span></label>
+                        <div class="row g-3" id="typeSelector">
+                            {% for val, label in question_types %}
+                            <div class="col-xl-3 col-md-4 col-6">
+                                <div class="type-card transition-all {% if question %}{% if question.question_type == val %}selected{% endif %}{% else %}{% if val == 'mcq_single' %}selected{% endif %}{% endif %}" 
+                                     data-type="{{ val }}" 
+                                     onclick="selectType('{{ val }}', this)">
+                                    <div class="type-icon mb-2">
+                                        {% if val == 'mcq_single' %}🔘
+                                        {% elif val == 'mcq_multi' %}☑️
+                                        {% elif val == 'true_false' %}✓✗
+                                        {% elif val == 'fill_blank' %}✏️
+                                        {% elif val == 'short_answer' %}📝
+                                        {% elif val == 'essay' %}📄
+                                        {% elif val == 'matching' %}🔗
+                                        {% elif val == 'ordering' %}🔢
+                                        {% endif %}
+                                    </div>
+                                    <div class="type-label fw-bold small text-center">{{ label }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" name="question_type" id="selectedType" value="{% if question %}{{ question.question_type }}{% else %}mcq_single{% endif %}">
+                    </div>
+
+                    <!-- Question text -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">نص السؤال <span class="text-danger">*</span></label>
+                        <textarea name="text" class="form-control rounded-3" rows="4" placeholder="أدخل نص السؤال هنا..." required>{{ question.text|default:'' }}</textarea>
+                    </div>
+
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">الدرجة المخصصة</label>
+                            <div class="input-group">
+                                <input type="number" name="marks" class="form-control text-center fw-bold" value="{{ question.marks|default:5 }}" min="1">
+                                <span class="input-group-text"><i class="bi bi-award"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label fw-bold small">شرح الإجابة (اختياري)</label>
+                            <input type="text" name="explanation" class="form-control" placeholder="سيظهر للطالب بعد انتهاء الاختبار" value="{{ question.explanation|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-5">
+                        <!-- ── MCQ Single ── -->
+                        <div id="section_mcq_single" class="type-section {% if question and question.question_type != 'mcq_single' %}d-none{% elif not question %} {% else %}d-none{% endif %}">
+                            <h6 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle text-primary fs-4"></i> خيارات الإجابة (اختر إجابة واحدة صحيحة)
+                            </h6>
+                            <div id="mcqOptions">
+                                {% if question and question.question_type == 'mcq_single' %}
+                                    {% for opt in question.options.all %}
+                                    <div class="mcq-option-row mb-3 transition-all">
+                                        <div class="input-group shadow-sm">
+                                            <div class="input-group-text bg-white">
+                                                <input type="radio" name="option_correct_single" value="{{ forloop.counter0 }}" onchange="syncCorrects()" {% if opt.is_correct %}checked{% endif %}>
+                                            </div>
+                                            <input type="text" name="option_text" class="form-control px-3" placeholder="نص الخيار" value="{{ opt.text }}">
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.mcq-option-row').remove()"><i class="bi bi-trash3"></i></button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for i in "012" %}
+                                    <div class="mcq-option-row mb-3 transition-all">
+                                        <div class="input-group shadow-sm">
+                                            <div class="input-group-text bg-white">
+                                                <input type="radio" name="option_correct_single" value="{{ forloop.counter0 }}" onchange="syncCorrects()" {% if forloop.first %}checked{% endif %}>
+                                            </div>
+                                            <input type="text" name="option_text" class="form-control px-3" placeholder="نص الخيار">
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.mcq-option-row').remove()"><i class="bi bi-trash3"></i></button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4 mt-2" onclick="addMcqOption()">
+                                <i class="bi bi-plus-lg me-1"></i>إضافة خيار جديد
+                            </button>
+                        </div>
+
+                        <!-- ── MCQ Multi ── -->
+                        <div id="section_mcq_multi" class="type-section {% if question.question_type == 'mcq_multi' %}{% else %}d-none{% endif %}">
+                            <h6 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                                <i class="bi bi-check-all text-primary fs-4"></i> خيارات الإجابة (حدد كافة الإجابات الصحيحة)
+                            </h6>
+                            <div id="mcqMultiOptions">
+                                {% if question and question.question_type == 'mcq_multi' %}
+                                    {% for opt in question.options.all %}
+                                    <div class="mcq-option-row mb-3">
+                                        <div class="input-group shadow-sm">
+                                            <div class="input-group-text bg-white">
+                                                <input type="checkbox" name="option_correct" value="{{ forloop.counter0 }}" {% if opt.is_correct %}checked{% endif %}>
+                                            </div>
+                                            <input type="text" name="option_text" class="form-control px-3" placeholder="نص الخيار" value="{{ opt.text }}">
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.mcq-option-row').remove()"><i class="bi bi-trash3"></i></button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for i in "012" %}
+                                    <div class="mcq-option-row mb-3">
+                                        <div class="input-group shadow-sm">
+                                            <div class="input-group-text bg-white">
+                                                <input type="checkbox" name="option_correct" value="{{ forloop.counter0 }}">
+                                            </div>
+                                            <input type="text" name="option_text" class="form-control px-3" placeholder="نص الخيار">
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.mcq-option-row').remove()"><i class="bi bi-trash3"></i></button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4 mt-2" onclick="addMcqMultiOption()">
+                                <i class="bi bi-plus-lg me-1"></i>إضافة خيار جديد
+                            </button>
+                        </div>
+
+                        <!-- ── True/False ── -->
+                        <div id="section_true_false" class="type-section {% if question.question_type == 'true_false' %}{% else %}d-none{% endif %}">
+                            <h6 class="fw-bold mb-4">حدد الإجابة الصحيحة</h6>
+                            <div class="d-flex gap-4">
+                                <label class="tf-option flex-grow-1">
+                                    <input type="radio" name="tf_answer" value="true" required {% if question.tf_answer %}checked{% endif %}>
+                                    <div class="tf-card correct-card rounded-4 p-4 text-center border-2 transition-all">
+                                        <span class="tf-icon d-block mb-2 fs-3">✓</span>
+                                        <span class="tf-label fw-bold text-uppercase">صحيح (True)</span>
+                                    </div>
+                                </label>
+                                <label class="tf-option flex-grow-1">
+                                    <input type="radio" name="tf_answer" value="false" {% if question and not question.tf_answer %}checked{% endif %}>
+                                    <div class="tf-card wrong-card rounded-4 p-4 text-center border-2 transition-all">
+                                        <span class="tf-icon d-block mb-2 fs-3">✗</span>
+                                        <span class="tf-label fw-bold text-uppercase">خطأ (False)</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- ── Fill Blank ── -->
+                        <div id="section_fill_blank" class="type-section {% if question.question_type == 'fill_blank' %}{% else %}d-none{% endif %}">
+                            <h6 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                                <i class="bi bi-input-cursor-text text-primary fs-4"></i> الإجابات المقبولة للفراغ
+                            </h6>
+                            <div id="blankAnswers">
+                                {% if question and question.question_type == 'fill_blank' %}
+                                    {% for blank in question.blanks.all %}
+                                    <div class="input-group mb-3 shadow-sm">
+                                        <input type="text" name="blank_answer" class="form-control px-3" placeholder="الإجابة الصحيحة" value="{{ blank.accepted_answer }}">
+                                        <button type="button" class="btn btn-outline-danger" onclick="if(document.getElementById('blankAnswers').children.length>1)this.closest('.input-group').remove()"><i class="bi bi-trash3"></i></button>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="input-group mb-3 shadow-sm">
+                                        <input type="text" name="blank_answer" class="form-control px-3" placeholder="الإجابة الصحيحة">
+                                        <button type="button" class="btn btn-outline-danger" onclick="if(document.getElementById('blankAnswers').children.length>1)this.closest('.input-group').remove()"><i class="bi bi-trash3"></i></button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4" onclick="addBlankAnswer()">
+                                <i class="bi bi-plus-lg me-1"></i>إضافة إجابة بديلة مقبولة
+                            </button>
+                        </div>
+
+                        <!-- ── Short Answer & Essay ── -->
+                        <div id="section_short_answer" class="type-section {% if question.question_type == 'short_answer' %}{% else %}d-none{% endif %}">
+                            <div class="alert bg-primary bg-opacity-10 text-primary border-0 rounded-4 p-4 d-flex gap-3 mb-4">
+                                <i class="bi bi-info-circle-fill fs-3"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">سؤال إجابة قصيرة - تصحيح يدوي</h6>
+                                    <p class="small mb-0 opacity-75">سيتم تصحيح هذا السؤال يدوياً من قِبل الأستاذ. يمكنك وضع نموذج للإجابة للمساعدة في التصحيح.</p>
+                                </div>
+                            </div>
+                            <label class="form-label fw-bold small">نموذج الإجابة للمصحح</label>
+                            <textarea name="rubric" class="form-control rounded-3" rows="4">{{ question.rubric|default:'' }}</textarea>
+                        </div>
+
+                        <div id="section_essay" class="type-section {% if question.question_type == 'essay' %}{% else %}d-none{% endif %}">
+                            <div class="alert bg-warning bg-opacity-10 text-warning border-0 rounded-4 p-4 d-flex gap-3 mb-4">
+                                <i class="bi bi-info-circle-fill fs-3"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">سؤال مقالي - تصحيح يدوي</h6>
+                                    <p class="small mb-0 opacity-75">يتطلب هذا السؤال إجابة تفصيلية من الطالب. يرجى تحديد معايير التقييم بوضوح.</p>
+                                </div>
+                            </div>
+                            <label class="form-label fw-bold small">معايير التقييم (Rubric)</label>
+                            <textarea name="rubric" class="form-control rounded-3" rows="6" placeholder="مثال: الفكرة الرئيسية (5 درجات)، الأسلوب (3 درجات)...">{{ question.rubric|default:'' }}</textarea>
+                        </div>
+
+                        <!-- ── Matching ── -->
+                        <div id="section_matching" class="type-section {% if question.question_type == 'matching' %}{% else %}d-none{% endif %}">
+                            <h6 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                                <i class="bi bi-arrows-expand text-primary fs-4"></i> أزواج المطابقة (توصيل)
+                            </h6>
+                            <div id="matchingPairs">
+                                {% if question and question.question_type == 'matching' %}
+                                    {% for pair in question.pairs.all %}
+                                    <div class="matching-pair-row mb-3 p-3 bg-light rounded-4">
+                                        <div class="row align-items-center g-3">
+                                            <div class="col-5">
+                                                <label class="x-small fw-bold text-muted mb-1 d-block text-center">المصطلح</label>
+                                                <input type="text" name="left_text" class="form-control shadow-sm" value="{{ pair.left_text }}">
+                                            </div>
+                                            <div class="col-1 text-center"><i class="bi bi-arrow-left-right text-muted"></i></div>
+                                            <div class="col-5">
+                                                <label class="x-small fw-bold text-muted mb-1 d-block text-center">التعريف</label>
+                                                <input type="text" name="right_text" class="form-control shadow-sm" value="{{ pair.right_text }}">
+                                            </div>
+                                            <div class="col-1">
+                                                <button type="button" class="btn btn-sm btn-ghost text-danger mt-3" onclick="this.closest('.matching-pair-row').remove()">
+                                                    <i class="bi bi-trash3 fs-5"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for i in "01" %}
+                                    <div class="matching-pair-row mb-3 p-3 bg-light rounded-4">
+                                        <div class="row align-items-center g-3">
+                                            <div class="col-5"><input type="text" name="left_text" class="form-control shadow-sm" placeholder="المصطلح"></div>
+                                            <div class="col-1 text-center"><i class="bi bi-arrow-left-right text-muted"></i></div>
+                                            <div class="col-5"><input type="text" name="right_text" class="form-control shadow-sm" placeholder="التعريف"></div>
+                                            <div class="col-1">
+                                                <button type="button" class="btn btn-sm btn-ghost text-danger" onclick="this.closest('.matching-pair-row').remove()">
+                                                    <i class="bi bi-trash3 fs-5"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4" onclick="addMatchingPair()">
+                                <i class="bi bi-plus-lg me-1"></i>إضافة زوج جديد
+                            </button>
+                        </div>
+
+                        <!-- ── Ordering ── -->
+                        <div id="section_ordering" class="type-section {% if question.question_type == 'ordering' %}{% else %}d-none{% endif %}">
+                            <h6 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                                <i class="bi bi-list-ol text-primary fs-4"></i> ترتيب العناصر (أدخلها بوضعها الصحيح)
+                            </h6>
+                            <div id="orderingItems">
+                                {% if question and question.question_type == 'ordering' %}
+                                    {% for item in question.order_items.all %}
+                                    <div class="ordering-item-row mb-3 transition-all">
+                                        <div class="input-group shadow-sm">
+                                            <span class="input-group-text bg-primary text-white fw-bold">{{ forloop.counter }}</span>
+                                            <input type="text" name="order_item" class="form-control px-3" value="{{ item.text }}">
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.ordering-item-row').remove();renumberOrdering()"><i class="bi bi-trash3"></i></button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for i in "012" %}
+                                    <div class="ordering-item-row mb-3 transition-all">
+                                        <div class="input-group shadow-sm">
+                                            <span class="input-group-text bg-primary text-white fw-bold">{{ forloop.counter }}</span>
+                                            <input type="text" name="order_item" class="form-control px-3" placeholder="العنصر">
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.ordering-item-row').remove();renumberOrdering()"><i class="bi bi-trash3"></i></button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4 mt-2" onclick="addOrderingItem()">
+                                <i class="bi bi-plus-lg me-1"></i>إضافة عنصر جديد
+                            </button>
+                        </div>
+
+                        <!-- ── Code Question ── -->
+                        <div id="section_code" class="type-section {% if question.question_type == 'code' %}{% else %}d-none{% endif %}">
+                            <h6 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                                <i class="bi bi-code-slash text-primary fs-4"></i> سؤال برمجي (Coding Challenge)
+                            </h6>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small">لغة البرمجة</label>
+                                    <select name="code_language" class="form-select shadow-sm">
+                                        <option value="python" {% if question.code_language == 'python' %}selected{% endif %}>Python</option>
+                                        <option value="javascript" {% if question.code_language == 'javascript' %}selected{% endif %}>JavaScript</option>
+                                        <option value="cpp" {% if question.code_language == 'cpp' %}selected{% endif %}>C++</option>
+                                        <option value="java" {% if question.code_language == 'java' %}selected{% endif %}>Java</option>
+                                        <option value="sql" {% if question.code_language == 'sql' %}selected{% endif %}>SQL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">كود البداية (Template) - اختياري</label>
+                                <textarea name="code_template" class="form-control font-monospace rounded-3" rows="6" placeholder="اكتُب الكود الذي سيظهر للطالب كبداية للحل...">{{ question.code_template|default:'' }}</textarea>
+                                <div class="form-text small opacity-75">سيتم تصحيح هذا السؤال يدوياً من قِبل الأستاذ.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mt-5 border-top pt-4">
+                        <button type="submit" class="btn btn-dark flex-grow-1 py-3 fw-bold rounded-3 shadow hover-up">
+                            <i class="bi bi-check-circle-fill me-2"></i> {% if question %}تحديث وحفظ التغييرات{% else %}إضافة السؤال للاختبار{% endif %}
+                        </button>
+                        <a href="{% url 'exam_edit' exam.pk %}" class="btn btn-light border py-3 px-4 fw-bold rounded-3">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const TYPES = ['mcq_single','mcq_multi','true_false','fill_blank','short_answer','essay','matching','ordering','code'];
+let mcqSingleCount = {% if question %}{{ question.options.count }}{% else %}3{% endif %};
+let mcqMultiCount = {% if question %}{{ question.options.count }}{% else %}3{% endif %};
+let orderingCount = {% if question %}{{ question.order_items.count }}{% else %}3{% endif %};
+let matchingCount = {% if question %}{{ question.pairs.count }}{% else %}2{% endif %};
+let blankCount = {% if question %}{{ question.blanks.count }}{% else %}1{% endif %};
+
+function selectType(type, el) {
+    document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+    if(el) el.classList.add('selected');
+    document.getElementById('selectedType').value = type;
+    TYPES.forEach(t => {
+        const sec = document.getElementById('section_' + t);
+        if(sec) sec.classList.add('d-none');
+    });
+    const sec = document.getElementById('section_' + type);
+    if(sec) sec.classList.remove('d-none');
+}
+
+function addMcqOption() {
+    mcqSingleCount++;
+    const div = document.createElement('div');
+    div.className = 'mcq-option-row mb-3 transition-all';
+    div.innerHTML = `<div class="input-group shadow-sm">
+        <div class="input-group-text bg-white"><input type="radio" name="option_correct_single" value="${mcqSingleCount-1}" onchange="syncCorrects()"></div>
+        <input type="text" name="option_text" class="form-control px-3" placeholder="نص الخيار الجديد">
+        <button type="button" class="btn btn-outline-danger" onclick="this.closest('.mcq-option-row').remove()"><i class="bi bi-trash3"></i></button>
+    </div>`;
+    document.getElementById('mcqOptions').appendChild(div);
+}
+
+function addMcqMultiOption() {
+    mcqMultiCount++;
+    const div = document.createElement('div');
+    div.className = 'mcq-option-row mb-3 transition-all';
+    div.innerHTML = `<div class="input-group shadow-sm">
+        <div class="input-group-text bg-white"><input type="checkbox" name="option_correct" value="${mcqMultiCount-1}"></div>
+        <input type="text" name="option_text" class="form-control px-3" placeholder="نص الخيار الجديد">
+        <button type="button" class="btn btn-outline-danger" onclick="this.closest('.mcq-option-row').remove()"><i class="bi bi-trash3"></i></button>
+    </div>`;
+    document.getElementById('mcqMultiOptions').appendChild(div);
+}
+
+function syncCorrects() { }
+
+function addBlankAnswer() {
+    blankCount++;
+    const div = document.createElement('div');
+    div.className = 'input-group mb-3 shadow-sm';
+    div.innerHTML = `<input type="text" name="blank_answer" class="form-control px-3" placeholder="إجابة بديلة">
+        <button type="button" class="btn btn-outline-danger" onclick="if(document.getElementById('blankAnswers').children.length>1)this.closest('.input-group').remove()"><i class="bi bi-trash3"></i></button>`;
+    document.getElementById('blankAnswers').appendChild(div);
+}
+
+function addMatchingPair() {
+    matchingCount++;
+    const div = document.createElement('div');
+    div.className = 'matching-pair-row mb-3 p-3 bg-light rounded-4';
+    div.innerHTML = `<div class="row align-items-center g-3">
+        <div class="col-5"><input type="text" name="left_text" class="form-control shadow-sm" placeholder="المصطلح"></div>
+        <div class="col-1 text-center"><i class="bi bi-arrow-left-right text-muted"></i></div>
+        <div class="col-5"><input type="text" name="right_text" class="form-control shadow-sm" placeholder="التعريف"></div>
+        <div class="col-1"><button type="button" class="btn btn-sm btn-ghost text-danger" onclick="this.closest('.matching-pair-row').remove()"><i class="bi bi-trash3 fs-5"></i></button></div>
+    </div>`;
+    document.getElementById('matchingPairs').appendChild(div);
+}
+
+function addOrderingItem() {
+    orderingCount++;
+    const div = document.createElement('div');
+    div.className = 'ordering-item-row mb-3 transition-all';
+    div.innerHTML = `<div class="input-group shadow-sm">
+        <span class="input-group-text bg-primary text-white fw-bold">${document.querySelectorAll('.ordering-item-row').length + 1}</span>
+        <input type="text" name="order_item" class="form-control px-3" placeholder="العنصر الجديد">
+        <button type="button" class="btn btn-outline-danger" onclick="this.closest('.ordering-item-row').remove();renumberOrdering()"><i class="bi bi-trash3"></i></button>
+    </div>`;
+    document.getElementById('orderingItems').appendChild(div);
+}
+
+function renumberOrdering() {
+    document.querySelectorAll('.ordering-item-row').forEach((row, i) => {
+        const span = row.querySelector('.input-group-text');
+        if(span) span.textContent = i + 1;
+    });
+}
+
+document.getElementById('questionForm').addEventListener('submit', function(e) {
+    const type = document.getElementById('selectedType').value;
+    if(type === 'mcq_single') {
+        const checked = document.querySelector('input[name=option_correct_single]:checked');
+        if(checked) {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'option_correct';
+            hidden.value = checked.value;
+            this.appendChild(hidden);
+        }
+    }
+});
+</script>
+{% endblock %}

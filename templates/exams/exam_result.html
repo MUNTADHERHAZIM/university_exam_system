@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}نتيجة الاختبار{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+<div class="col-lg-8">
+    <!-- Result Header -->
+    <div class="result-hero text-center mb-4">
+        <div class="display-1 mb-2">{% if passed %}🎉{% else %}📚{% endif %}</div>
+        <h2 class="fw-bold {% if passed %}text-success{% else %}text-danger{% endif %}">
+            {% if passed %}أحسنت! اجتزت الاختبار{% else %}لم تجتز الاختبار هذه المرة{% endif %}
+        </h2>
+        <p class="text-muted">{{ attempt.exam.title }} • {{ attempt.exam.subject }}</p>
+    </div>
+
+    <!-- Score Card -->
+    <div class="card-panel text-center mb-4">
+        <div class="row g-3 mb-3">
+            <div class="col-4">
+                <div class="result-stat">
+                    <div class="result-stat-value" style="color:var(--gold2)">{{ attempt.final_score|default:0|floatformat:1 }}</div>
+                    <div class="result-stat-label">درجتك</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="result-stat">
+                    <div class="result-stat-value {% if attempt.grade == 'F' %}text-danger{% elif attempt.grade in 'A,A+' %}text-success{% else %}text-warning{% endif %}">
+                        {{ attempt.grade|default:"-" }}
+                    </div>
+                    <div class="result-stat-label">التقدير</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="result-stat">
+                    <div class="result-stat-value">{{ percentage }}%</div>
+                    <div class="result-stat-label">النسبة</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress mb-3" style="height:12px;border-radius:6px">
+            <div class="progress-bar {% if passed %}bg-success{% else %}bg-danger{% endif %}" style="width:{{ percentage }}%"></div>
+        </div>
+
+        <div class="row g-2 text-center">
+            <div class="col-4"><div class="info-box"><div class="fw-bold">{{ attempt.exam.total_marks }}</div><div class="text-muted small">الدرجة الكلية</div></div></div>
+            <div class="col-4"><div class="info-box"><div class="fw-bold">{{ attempt.exam.pass_mark }}</div><div class="text-muted small">حد النجاح</div></div></div>
+            <div class="col-4"><div class="info-box"><div class="fw-bold">{{ attempt.get_time_spent_display }}</div><div class="text-muted small">الوقت المستغرق</div></div></div>
+        </div>
+    </div>
+
+    {% if passed and attempt.is_fully_graded %}
+    <div class="certificate-promo card-panel text-center mb-4 p-4" style="background: linear-gradient(135deg, #fff 0%, #fffbf0 100%); border: 1px solid var(--gold); border-radius: 24px; box-shadow: 0 10px 25px rgba(191,161,95,0.1);">
+        <div class="fs-1 mb-3">📜</div>
+        <h4 class="fw-bold" style="color:#856404">شهادة اجتياز معتمدة</h4>
+        <p class="text-secondary">مبارك لك! يمكنك الآن الحصول على شهادة رسمية توثق اجتيازك لهذا المقرر بنجاح.</p>
+        <a href="{% url 'generate_certificate' attempt.pk %}" target="_blank" class="btn btn-gold btn-lg px-5 py-3 rounded-pill shadow-sm">
+            <i class="bi bi-patch-check-fill me-2"></i>استعراض وتحميل الشهادة
+        </a>
+    </div>
+    {% endif %}
+
+    {% if attempt.violations_count > 0 %}
+    <div class="alert alert-danger d-flex align-items-center gap-3 mb-4">
+        <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+        <div>
+            <strong>تم تسجيل {{ attempt.violations_count }} مخالفة</strong> <div class="small">تم إبلاغ الأستاذ المشرف بهذه المخالفات.</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not attempt.is_fully_graded %}
+    <div class="alert alert-info d-flex align-items-center gap-3 mb-4">
+        <i class="bi bi-hourglass-split fs-3"></i>
+        <div>
+            <strong>بانتظار التصحيح اليدوي</strong>
+            <div class="small">بعض الأسئلة تحتاج مراجعة الأستاذ. ستُحدَّث درجتك النهائية قريباً.</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Answer Details -->
+    {% if attempt.exam.allow_review or request.user.profile.role != 'student' %}
+    <div class="card-panel">
+        <div class="panel-header">
+            <h6 class="panel-title">تفاصيل الإجابات</h6>
+        </div>
+        <div class="panel-body p-0">
+            {% for answer in answers %}
+            <div class="answer-review-item">
+                <div class="answer-review-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="answer-status-dot
+                            {% if answer.is_graded %}
+                                {% if answer.earned_marks == answer.question.marks %}dot-correct
+                                {% elif answer.earned_marks == 0 %}dot-wrong
+                                {% else %}dot-partial{% endif %}
+                            {% else %}dot-pending{% endif %}">
+                        </div>
+                        <span class="badge {% if answer.question.question_type in 'mcq_single,mcq_multi' %}bg-primary{% elif answer.question.question_type in 'essay,short_answer' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %} small">
+                            {{ answer.question.get_question_type_display }}
+                        </span>
+                        <span class="text-muted small">{{ answer.question.text|truncatechars:70 }}</span>
+                    </div>
+                    <div class="fw-bold {% if answer.is_graded %}{% if answer.earned_marks == answer.question.marks %}text-success{% elif answer.earned_marks == 0 %}text-danger{% else %}text-warning{% endif %}{% else %}text-muted{% endif %}">
+                        {% if answer.is_graded %}
+                            {{ answer.earned_marks|floatformat:1 }}/{{ answer.question.marks }}
+                        {% else %}
+                            انتظار
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if answer.grader_comment %}
+                <div class="grader-comment">
+                    <i class="bi bi-chat-quote me-1"></i>{{ answer.grader_comment }}
+                </div>
+                {% endif %}
+
+                {% if answer.question.explanation and answer.is_graded and answer.earned_marks == 0 %}
+                <div class="answer-explanation">
+                    <i class="bi bi-lightbulb-fill text-warning me-1"></i>{{ answer.question.explanation }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card-panel text-center py-5 mt-4">
+        <i class="bi bi-eye-slash text-muted" style="font-size: 3rem;"></i>
+        <h5 class="mt-3">تفاصيل الإجابات غير متاحة</h5>
+        <p class="text-secondary mb-0">أغلق الأستاذ المشرف إمكانية مراجعة الإجابات والحصول على التغذية الراجعة لهذا الاختبار.</p>
+    </div>
+    {% endif %}
+
+
+    <div class="d-flex gap-2 mt-4">
+        <a href="{% url 'dashboard' %}" class="btn btn-gold flex-grow-1"><i class="bi bi-house-fill me-1"></i>العودة للرئيسية</a>
+    </div>
+</div>
+</div>
+{% endblock %}

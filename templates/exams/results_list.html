@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}النتائج{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">النتائج {% if user.profile.role == 'admin' %}والتصحيح{% endif %}</h1>
+        <p class="page-sub">{% if user.profile.role == 'admin' %}إدارة نتائج الطلاب والتصحيح اليدوي{% else %}عرض نتائج اختباراتي{% endif %}</p>
+    </div>
+    {% if user.profile.role == 'admin' %}
+    <a href="{% url 'export_results' %}{% if selected_exam %}?exam={{ selected_exam }}{% endif %}" class="btn btn-primary">
+        <i class="bi bi-download me-1"></i>تصدير CSV
+    </a>
+    {% endif %}
+</div>
+
+<!-- Filters -->
+<div class="card-panel mb-4">
+    <div class="panel-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">تصفية بالاختبار</label>
+                <select name="exam" class="form-select" onchange="this.form.submit()">
+                    <option value="">كل الاختبارات</option>
+                    {% for e in exams %}
+                    <option value="{{ e.pk }}" {% if selected_exam == e.pk|stringformat:"s" %}selected{% endif %}>{{
+                        e.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if user.profile.role == 'admin' %}
+            <div class="col-md-4">
+                <label class="form-label">حالة التصحيح</label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>الكل</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>يحتاج تصحيح يدوي
+                    </option>
+                    <option value="graded" {% if status_filter == 'graded' %}selected{% endif %}>مصحح بالكامل</option>
+                </select>
+            </div>
+            {% endif %}
+            <div class="col-md-4">
+                <a href="{% url 'results_list' %}" class="btn btn-ghost w-100"><i class="bi bi-x-circle me-1"></i>مسح
+                    الفلتر</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-panel">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    {% if user.profile.role == 'admin' %}<th>الطالب</th>{% endif %}
+                    <th>الاختبار</th>
+                    <th>الدرجة</th>
+                    <th>التقدير</th>
+                    <th>النسبة</th>
+                    {% if user.profile.role == 'admin' %}<th>المخالفات</th>{% endif %}
+                    <th>الحالة</th>
+                    <th>تاريخ التسليم</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attempt in attempts %}
+                <tr>
+                    {% if user.profile.role == 'admin' %}
+                    <td>
+                        <div class="fw-bold">{{ attempt.student.get_full_name }}</div>
+                        <div class="text-muted small">{{ attempt.student.username }}</div>
+                    </td>
+                    {% endif %}
+                    <td class="text-muted small">{{ attempt.exam.title }}</td>
+                    <td>
+                        <span class="fw-bold text-warning">{{ attempt.final_score|default:0|floatformat:1 }}</span>
+                        <span class="text-muted">/{{ attempt.exam.total_marks }}</span>
+                    </td>
+                    <td>
+                        <span class="fw-bold fs-5
+                            {% if attempt.grade == 'F' %}text-danger
+                            {% elif attempt.grade in 'A+,A' %}text-success
+                            {% else %}text-warning{% endif %}">
+                            {{ attempt.grade|default:"-" }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="progress" style="width:80px;height:6px">
+                            <div class="progress-bar {% if attempt.get_percentage >= 50 %}bg-success{% else %}bg-danger{% endif %}"
+                                style="width:{{ attempt.get_percentage }}%"></div>
+                        </div>
+                        <div class="text-muted small mt-1">{{ attempt.get_percentage }}%</div>
+                    </td>
+                    {% if user.profile.role == 'admin' %}
+                    <td>
+                        {% if attempt.violations_count > 0 %}
+                        <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ attempt.violations_count }}</span>
+                        {% else %}
+                        <span class="badge bg-success"><i class="bi bi-check me-1"></i>نظيف</span>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    <td>
+                        {% if attempt.is_fully_graded %}
+                        <span class="badge badge-green"><i class="bi bi-check-circle-fill me-1"></i>مصحح</span>
+                        {% else %}
+                        <span class="badge badge-orange"><i class="bi bi-hourglass-split me-1"></i>يحتاج مراجعة</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ attempt.submitted_at|date:"Y/m/d H:i" }}</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'exam_result' attempt.pk %}" class="btn btn-sm btn-ghost" title="عرض"><i
+                                    class="bi bi-eye"></i></a>
+                            {% if not attempt.is_fully_graded %}
+                            <a href="{% url 'grade_attempt' attempt.pk %}" class="btn btn-sm btn-warning text-dark"
+                                title="تصحيح">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-5 text-muted">لا توجد نتائج بهذه المعايير</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

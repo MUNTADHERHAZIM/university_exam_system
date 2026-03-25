@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}تسجيل الدخول - نظام الاختبارات{% endblock %}
+{% block auth_content %}
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-logo">🎓</div>
+        <h1 class="login-title">نظام الاختبارات الجامعي</h1>
+        <p class="login-sub">University Examination System</p>
+
+        {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-danger py-2 small">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-bold">اسم المستخدم / الرقم الجامعي</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-person-fill text-warning"></i></span>
+                    <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="أدخل اسم المستخدم" required autofocus>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold">كلمة المرور</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-lock-fill text-warning"></i></span>
+                    <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="••••••••" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-gold w-100 py-2 fw-bold fs-6">
+                <i class="bi bi-box-arrow-in-right me-2"></i>تسجيل الدخول
+            </button>
+        </form>
+        <div class="text-center mt-4 pt-3 border-top">
+            <span class="text-muted small">ليس لديك حساب؟</span>
+            <a href="{% url 'register' %}" class="btn btn-sm btn-outline-secondary mt-2 w-100 fw-bold">إنشاء حساب جديد كطالب</a>
+        </div>
+    </div>
+</div>
+<script>
+function fillLogin(user, pass) {
+    document.querySelector('input[name=username]').value = user;
+    document.querySelector('input[name=password]').value = pass;
+}
+</script>
+{% endblock %}

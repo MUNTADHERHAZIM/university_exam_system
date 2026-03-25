@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}تصحيح: {{ attempt.student.get_full_name }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">التصحيح اليدوي</h1>
+        <p class="page-sub">{{ attempt.student.get_full_name }} • {{ exam.title }}</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <div class="badge bg-white border border-primary text-primary fs-6 px-3 py-2 shadow-sm">
+            الدرجة الحالية: <span class="fw-bold">{{ attempt.final_score|default:0|floatformat:1 }}/{{exam.total_marks}}</span>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="row g-4">
+        <!-- Answers -->
+        <div class="col-lg-8">
+            {% for answer in answers %}
+            <div class="card-panel mb-3" id="answer_{{ answer.id }}">
+                <div class="panel-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="q-number-badge small">{{ forloop.counter }}</span>
+                        <span
+                            class="badge {% if answer.question.is_auto_graded %}badge-green{% else %}badge-orange{% endif %}">
+                            {{ answer.question.get_question_type_display }}
+                        </span>
+                        {% if answer.question.is_auto_graded %}
+                        <span class="badge badge-green"><i class="bi bi-robot me-1"></i>تصحيح تلقائي</span>
+                        {% else %}
+                        <span class="badge badge-orange"><i class="bi bi-hand-index me-1"></i>يدوي</span>
+                        {% endif %}
+                    </div>
+                    <span class="fw-bold text-primary">{{ answer.question.marks }} درجة</span>
+                </div>
+                <div class="panel-body">
+                    <!-- Question text -->
+                    <div class="mb-3 p-3 rounded" style="background:#f8fafc;border:1px solid var(--border)">
+                        <pre class="mb-0"
+                            style="white-space:pre-wrap;font-family:Tajawal;font-size:15px;font-weight:600;color:var(--text-main)">{{ answer.question.text }}</pre>
+                    </div>
+
+                    <!-- Student answer -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-primary">إجابة الطالب:</label>
+                        {% if answer.question.question_type in 'short_answer,essay,fill_blank' %}
+                        <div class="p-3 rounded border bg-white"
+                            style="min-height:60px;white-space:pre-wrap;color:var(--text-main);font-weight:500;">
+                            {{ answer.answer_text|default:"(لم يجب)" }}
+                        </div>
+                        {% elif answer.question.question_type in 'mcq_single,mcq_multi' %}
+                        <div>
+                            {% for opt in answer.question.options.all %}
+                            <div class="d-flex align-items-center gap-2 py-1">
+                                {% if opt.is_correct %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i
+                                    class="bi bi-circle text-muted"></i>{% endif %}
+                                <span>{{ opt.text }}</span>
+                                {% if opt.id|stringformat:"s" in answer.selected_options %}<span
+                                    class="badge bg-primary">اختار الطالب</span>{% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% elif answer.question.question_type == 'true_false' %}
+                        <div>إجابة الطالب: <strong>{{ answer.answer_text|default:"-" }}</strong>
+                            | الصحيح: <strong>{% if answer.question.tf_answer %}صحيح{% else %}خطأ{% endif %}</strong>
+                        </div>
+                        {% else %}
+                        <div class="text-muted small">
+                            {{answer.answer_text|default:answer.ordering_answer|default:answer.matching_answer|default:"(لم يجب)" }}</div>
+                        {% endif %}
+                    </div>
+
+                    {% if answer.question.rubric %}
+                    <div class="alert alert-info py-2 small mb-3">
+                        <strong><i class="bi bi-list-check me-1"></i>معايير التقييم:</strong>
+                        <pre class="mb-0 mt-1"
+                            style="white-space:pre-wrap;font-family:Tajawal;font-size:13px">{{ answer.question.rubric }}</pre>
+                    </div>
+                    {% endif %}
+
+                    <!-- Grading -->
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label">الدرجة (من {{ answer.question.marks }})</label>
+                            <input type="number" name="marks_{{ answer.id }}" class="form-control"
+                                value="{{ answer.earned_marks|default:0|floatformat:1 }}" min="0"
+                                max="{{ answer.question.marks }}" step="0.5" {% if answer.question.is_auto_graded %}readonly style="opacity:.6" {% endif %}>
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label">تعليق المصحح (اختياري)</label>
+                            <input type="text" name="comment_{{ answer.id }}" class="form-control"
+                                value="{{ answer.grader_comment }}" placeholder="ملاحظات للطالب...">
+                        </div>
+                    </div>
+                    {% if answer.question.is_auto_graded %}
+                    <div class="text-muted small mt-1"><i class="bi bi-robot me-1"></i>صُحِّح تلقائياً — يمكن التعديل إن  لزم</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Summary panel -->
+        <div class="col-lg-4">
+            <div class="card-panel sticky-top" style="top:70px">
+                <div class="panel-header">
+                    <h6 class="panel-title">ملخص التصحيح</h6>
+                </div>
+                <div class="panel-body">
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">الطالب</div>
+                        <div class="fw-bold">{{ attempt.student.get_full_name }}</div>
+                        <div class="text-muted small">{{ attempt.student.username }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">الاختبار</div>
+                        <div class="fw-bold">{{ exam.title }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">وقت التسليم</div>
+                        <div>{{ attempt.submitted_at|date:"Y/m/d H:i" }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">الوقت المستغرق</div>
+                        <div>{{ attempt.get_time_spent_display }}</div>
+                    </div>
+                    {% if attempt.violations_count > 0 %}
+                    <div class="alert alert-danger py-2 small">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        {{ attempt.violations_count }} مخالفة مسجلة
+                    </div>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات عامة للطالب</label>
+                        <textarea name="grader_notes" class="form-control" rows="3"
+                            placeholder="ملاحظات عامة...">{{ attempt.grader_notes }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                        <i class="bi bi-save-fill me-1"></i>حفظ التصحيح
+                    </button>
+                    <a href="{% url 'results_list' %}" class="btn btn-ghost w-100 mt-2">إلغاء</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

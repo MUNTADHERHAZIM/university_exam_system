@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}الاختبارات{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">الاختبارات</h1>
+        <p class="page-sub">إدارة جميع الاختبارات</p>
+    </div>
+    <a href="{% url 'exam_create' %}" class="btn btn-gold"><i class="bi bi-plus-circle-fill me-2"></i>إنشاء اختبار</a>
+</div>
+
+<!-- Search & Filter -->
+<div class="card-panel mb-4">
+    <div class="panel-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">بحث</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="بحث بالعنوان أو المادة..." value="{{ search_q }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">الكلية</label>
+                <select name="college" class="form-select" onchange="this.form.submit()">
+                    <option value="">كل الكليات</option>
+                    {% for c in colleges %}
+                    <option value="{{ c.id }}" {% if selected_college == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">القسم</label>
+                <select name="department" class="form-select" onchange="this.form.submit()">
+                    <option value="">كل الأقسام</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}" {% if selected_dept == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">المادة</label>
+                <select name="subject" class="form-select" onchange="this.form.submit()">
+                    <option value="">الكل</option>
+                    {% for s in subjects %}
+                    <option value="{{ s }}" {% if subject_filter == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">الحالة</label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">الكل</option>
+                    <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>مسودة</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>نشط</option>
+                    <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>مغلق</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'exam_list' %}" class="btn btn-ghost w-100 mt-auto"><i class="bi bi-x-circle me-1"></i>مسح</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for exam in exams %}
+    <div class="col-xl-4 col-md-6">
+        <div class="exam-card">
+            <div class="exam-card-header">
+                <span class="badge badge-gold">{{ exam.subject }}</span>
+                {% if exam.course %}
+                <span class="badge badge-blue">{{ exam.course.department.name }}</span>
+                {% endif %}
+                <span class="badge {% if exam.status == 'active' %}badge-green{% elif exam.status == 'closed' %}badge-gray{% else %}badge-orange{% endif %}">
+                    {{ exam.get_status_display }}
+                </span>
+            </div>
+            <h5 class="exam-card-title">{{ exam.title }}</h5>
+            <div class="exam-card-meta">
+                <span><i class="bi bi-list-ol me-1"></i>{{ exam.get_question_count }} سؤال</span>
+                <span><i class="bi bi-clock me-1"></i>{{ exam.duration }} دقيقة</span>
+                <span><i class="bi bi-award me-1"></i>{{ exam.total_marks }} درجة</span>
+                <span><i class="bi bi-people me-1"></i>{{ exam.attempt_count }} محاولة</span>
+            </div>
+            <div class="d-flex gap-2 mt-3">
+                <a href="{% url 'exam_edit' exam.pk %}" class="btn btn-gold flex-grow-1"><i class="bi bi-pencil-fill me-1"></i>تعديل</a>
+                <a href="{% url 'results_list' %}?exam={{ exam.pk }}" class="btn btn-ghost"><i class="bi bi-graph-up"></i></a>
+                <a href="{% url 'exam_delete' exam.pk %}" class="btn btn-danger"><i class="bi bi-trash3-fill"></i></a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5 text-muted">
+        <i class="bi bi-clipboard2-x fs-1 d-block mb-3"></i>
+        <h5>لا توجد اختبارات بعد</h5>
+        <a href="{% url 'exam_create' %}" class="btn btn-gold mt-2">إنشاء أول اختبار</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

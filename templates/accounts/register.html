@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}إنشاء حساب جديد - نظام الاختبارات{% endblock %}
+{% block auth_content %}
+<div class="login-page">
+    <div class="login-card" style="max-width: 500px;">
+        <div class="login-logo">🎓</div>
+        <h1 class="login-title">حساب طالب جديد</h1>
+        <p class="login-sub">إنشاء حساب للوصول للاختبارات</p>
+
+        {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} py-2 small">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post" class="mt-4 text-start">
+            {% csrf_token %}
+            
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label fw-bold small">الاسم الأول</label>
+                    <input type="text" name="first_name" class="form-control" placeholder="محمد" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-bold small">الاسم الأخير</label>
+                    <input type="text" name="last_name" class="form-control" placeholder="أحمد" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small">البريد الإلكتروني</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-envelope-fill text-warning"></i></span>
+                    <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="student@example.com" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small">اسم المستخدم (الرقم الجامعي)</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-person-fill text-warning"></i></span>
+                    <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="اختر اسم مستخدم فريد" required>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label fw-bold small">كلمة المرور</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-lock-fill text-warning"></i></span>
+                        <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-bold small">تأكيد كلمة المرور</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-check-circle-fill text-warning"></i></span>
+                        <input type="password" name="password_confirm" class="form-control border-start-0 ps-0" placeholder="••••••••" required>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4 text-muted">
+
+            <!-- Math CAPTCHA -->
+            <div class="mb-4">
+                <label class="form-label fw-bold small text-danger"><i class="bi bi-robot me-1"></i>اختبار أمان (CAPTCHA)</label>
+                <div class="d-flex align-items-center gap-3 bg-light p-3 rounded-3 border">
+                    <div class="fs-4 fw-bold text-primary flex-shrink-0" id="captcha-display" style="letter-spacing: 2px;">
+                        {{ captcha_text }} =
+                    </div>
+                    <input type="number" name="captcha" class="form-control text-center fw-bold fs-5" placeholder="؟" required>
+                </div>
+                <div class="form-text mt-1 text-muted" style="font-size: 0.8rem;">يرجى حل المسألة الرياضية للتأكد من أنك لست برنامج روبوت.</div>
+            </div>
+
+            <button type="submit" class="btn btn-gold w-100 py-2 fw-bold fs-6">
+                <i class="bi bi-person-plus-fill me-2"></i>إنشاء الحساب
+            </button>
+        </form>
+
+        <div class="text-center mt-4 pt-3 border-top">
+            <span class="text-muted small">لديك حساب بالفعل؟</span>
+            <a href="{% url 'login' %}" class="btn btn-sm btn-outline-secondary mt-2 w-100 fw-bold">تسجيل الدخول</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

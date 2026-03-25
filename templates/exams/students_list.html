@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}الطلاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">الطلاب</h1>
+        <p class="page-sub">{{ total }} طالب مسجل</p>
+    </div>
+</div>
+<div class="card-panel">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>الاسم الكامل</th>
+                    <th>اسم المستخدم</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>الرقم الجامعي</th>
+                    <th>التخصص</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td><div class="fw-bold">👤 {{ student.get_full_name|default:student.username }}</div></td>
+                    <td class="text-muted">{{ student.username }}</td>
+                    <td class="text-muted small">{{ student.email|default:"-" }}</td>
+                    <td><span class="badge badge-gold">{{ student.profile.student_id|default:"-" }}</span></td>
+                    <td class="text-muted small">{{ student.profile.department|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-5 text-muted">لا يوجد طلاب مسجلون</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

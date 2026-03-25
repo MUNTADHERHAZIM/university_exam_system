@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}الملف الشخصي{% endblock %}
+{% block content %}
+<div class="page-header"><h1 class="page-title">الملف الشخصي</h1></div>
+<div class="row justify-content-center">
+<div class="col-lg-6">
+    <div class="card-panel">
+        <div class="panel-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">الاسم الأول</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">الاسم الأخير</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" name="email" class="form-control" value="{{ user.email }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">رقم الهاتف</label>
+                        <input type="text" name="phone" class="form-control" value="{{ profile.phone }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">التخصص / القسم</label>
+                        <input type="text" name="department" class="form-control" value="{{ profile.department }}">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-gold w-100"><i class="bi bi-save-fill me-1"></i>حفظ</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

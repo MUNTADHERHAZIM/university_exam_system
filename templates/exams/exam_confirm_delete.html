@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}حذف الاختبار{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height:60vh">
+<div class="col-md-5">
+    <div class="card-panel text-center" style="border-color:#E74C3C">
+        <div class="display-2 mb-3">🗑️</div>
+        <h4 class="fw-bold text-danger mb-2">حذف الاختبار</h4>
+        <p class="text-muted mb-4">هل أنت متأكد من حذف الاختبار "<strong class="text-white">{{ exam.title }}</strong>"؟<br>
+        <span class="text-danger small">هذا الإجراء لا يمكن التراجع عنه وسيُحذف مع جميع أسئلته ونتائجه.</span></p>
+        <div class="d-flex gap-2 justify-content-center">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger px-4">تأكيد الحذف</button>
+            </form>
+            <a href="{% url 'exam_list' %}" class="btn btn-ghost px-4">إلغاء</a>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

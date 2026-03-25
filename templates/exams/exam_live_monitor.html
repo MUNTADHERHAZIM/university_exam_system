@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}مراقبة حية: {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div class="monitor-dashboard fade-in">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 text-danger"><i class="bi bi-broadcast me-2 blink text-danger"></i>مراقبة حية للاختبار</h2>
+            <p class="text-muted mb-0">{{ exam.title }} - {{ exam.subject }}</p>
+        </div>
+        <div>
+            <span class="badge bg-dark rounded-pill px-3 py-2 fs-6 shadow-sm border border-secondary">
+                <i class="bi bi-people-fill me-2"></i>الطلاب النشطين: <span id="active-count">0</span>
+            </span>
+            <a href="{% url 'exam_list' %}" class="btn btn-outline-secondary ms-2 rounded-pill">
+                <i class="bi bi-arrow-right"></i> رجوع
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="monitor-stat-card border-primary text-primary">
+                <h6>المحاولات المستمرة</h6>
+                <h3 id="stat-active" class="fw-bold mb-0">0</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="monitor-stat-card border-success text-success">
+                <h6>المحاولات المسلمة</h6>
+                <h3 id="stat-submitted" class="fw-bold mb-0">0</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="monitor-stat-card border-warning text-warning">
+                <h6>إجمالي المخالفات</h6>
+                <h3 id="stat-violations" class="fw-bold mb-0">0</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="monitor-stat-card border-danger text-danger">
+                <h6>تنبيهات حرجة</h6>
+                <h3 id="stat-critical" class="fw-bold mb-0">0</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Grid -->
+    <div class="row g-3" id="students-grid">
+        <!-- Cards will be populated here via AJAX -->
+        <div class="col-12 text-center py-5 text-muted" id="loading-state">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+            <p class="mt-2">جاري البحث عن محاولات نشطة...</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .monitor-dashboard {
+        padding: 1rem 0;
+    }
+    .blink {
+        animation: blinker 1.5s linear infinite;
+    }
+    @keyframes blinker {
+        50% { opacity: 0; }
+    }
+    .monitor-stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border-bottom: 4px solid;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        transition: transform 0.2s;
+    }
+    .monitor-stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .student-monitor-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .student-monitor-card.active {
+        border-right: 4px solid #0d6efd;
+    }
+    .student-monitor-card.submitted {
+        border-right: 4px solid #198754;
+        opacity: 0.8;
+    }
+    .student-monitor-card.critical {
+        border-right: 4px solid #dc3545;
+        background-color: #fffafb;
+        animation: pulse-danger 2s infinite;
+    }
+    @keyframes pulse-danger {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 20px;
+    }
+    
+    .metric {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    .metric-val {
+        font-weight: 600;
+        color: #212529;
+    }
+    .violation-pill {
+        display: inline-flex;
+        align-items: center;
+        background: #fff3cd;
+        color: #856404;
+        border-radius: 20px;
+        padding: 2px 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .violation-pill.high {
+        background: #f8d7da;
+        color: #721c24;
+    }
+</style>
+
+<script>
+    const DEMO_MODE = false; // set true for testing UI without real data
+    const apiEndpoint = "{% url 'api_live_monitor' exam.pk %}";
+    let refreshInterval = null;
+
+    function createStudentCard(attempt) {
+        let statusClass = attempt.status === 'submitted' ? 'submitted' : 'active';
+        let isCritical = attempt.violations >= 3 && attempt.status !== 'submitted';
+        if (isCritical) statusClass = 'critical';
+
+        let badgeHtml = '';
+        if (attempt.status === 'active') {
+             badgeHtml = '<span class="status-badge bg-primary text-white"><i class="bi bi-record-circle me-1 blink"></i>مستمر</span>';
+        } else if (attempt.status === 'submitted') {
+             badgeHtml = '<span class="status-badge bg-success text-white"><i class="bi bi-check-circle me-1"></i>مسلّم ('+attempt.score_pct+'%)</span>';
+        } else {
+             badgeHtml = '<span class="status-badge bg-secondary text-white">انتهى الوقت</span>';
+        }
+
+        let violationClass = attempt.violations >= 3 ? 'high' : '';
+        let violationHtml = `<div class="violation-pill ${violationClass} mt-2"><i class="bi bi-shield-exclamation me-1"></i>${attempt.violations} مخالفة</div>`;
+        if (attempt.violations === 0) {
+            violationHtml = `<div class="violation-pill mt-2" style="background:#d4edda;color:#155724;"><i class="bi bi-shield-check me-1"></i>0 مخالفات</div>`;
+        }
+
+        return `
+        <div class="col-md-4 col-lg-3">
+            <div class="student-monitor-card ${statusClass}">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h6 class="fw-bold mb-0 text-truncate" title="${attempt.student_name}"><i class="bi bi-person-circle text-muted me-2"></i>${attempt.student_name}</h6>
+                    ${badgeHtml}
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="metric">البدء: <span class="metric-val" dir="ltr">${attempt.started_at}</span></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="metric">الوقت المتبقي: <span class="metric-val text-primary" dir="ltr">${attempt.time_left}</span></span>
+                </div>
+                
+                <hr class="my-2 border-light">
+                
+                <div class="d-flex justify-content-between align-items-end">
+                    ${violationHtml}
+                    <span class="metric" style="font-size: 0.7rem;">IP: ${attempt.ip || 'غير معروف'}</span>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    function fetchMonitorData() {
+        if(DEMO_MODE) return;
+        
+        fetch(apiEndpoint)
+            .then(res => res.json())
+            .then(data => {
+                const grid = document.getElementById('students-grid');
+                if (data.attempts.length === 0) {
+                    grid.innerHTML = '<div class="col-12 text-center py-5 text-muted"><p>لا توجد محاولات نشطة حالياً.</p></div>';
+                    document.getElementById('active-count').innerText = '0';
+                    return;
+                }
+
+                let html = '';
+                let activeCount = 0;
+                let submittedCount = 0;
+                let totalViolations = 0;
+                let criticalCount = 0;
+
+                data.attempts.forEach(attempt => {
+                    html += createStudentCard(attempt);
+                    
+                    if (attempt.status !== 'submitted') activeCount++;
+                    else submittedCount++;
+                    
+                    totalViolations += attempt.violations;
+                    if (attempt.violations >= 3 && attempt.status !== 'submitted') criticalCount++;
+                });
+
+                grid.innerHTML = html;
+                
+                // Update stats
+                document.getElementById('active-count').innerText = activeCount;
+                document.getElementById('stat-active').innerText = activeCount;
+                document.getElementById('stat-submitted').innerText = submittedCount;
+                document.getElementById('stat-violations').innerText = totalViolations;
+                document.getElementById('stat-critical').innerText = criticalCount;
+            })
+            .catch(err => console.error('Error fetching monitor data:', err));
+    }
+
+    // Start polling every 3 seconds
+    document.addEventListener("DOMContentLoaded", function() {
+        fetchMonitorData();
+        refreshInterval = setInterval(fetchMonitorData, 3000);
+    });
+</script>
+{% endblock %}

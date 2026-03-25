@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% block title %}بدء الاختبار - {{ exam.title }}{% endblock %}
+{% block extra_css %}
+<style>
+    .proctoring-page { max-width: 700px; margin: 0 auto; }
+    .exam-hero { text-align: center; padding: 2rem 0; }
+    .exam-hero-icon { font-size: 3.5rem; margin-bottom: 0.5rem; }
+    .exam-hero h2 { font-weight: 800; margin-bottom: 0.25rem; }
+
+    .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin: 1.5rem 0; }
+    .info-cell { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 0.5rem; text-align: center; }
+    .info-cell i { font-size: 1.3rem; color: var(--primary); display: block; margin-bottom: 0.3rem; }
+    .info-cell .val { font-size: 1.25rem; font-weight: 700; }
+    .info-cell .lbl { font-size: 0.75rem; color: var(--text-muted); }
+
+    .terms-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin: 1.5rem 0; }
+    .terms-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .terms-list { list-style: none; padding: 0; margin: 0; }
+    .terms-list li { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .terms-list li:last-child { border-bottom: none; }
+    .terms-list .t-icon { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
+    .t-danger { background: #fee2e2; color: #dc2626; }
+    .t-warning { background: #fef3c7; color: #d97706; }
+    .t-info { background: #dbeafe; color: #2563eb; }
+    .t-green { background: #dcfce7; color: #16a34a; }
+
+    .check-step { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; background: var(--surface); border: 2px solid var(--border); border-radius: 14px; margin-bottom: 0.75rem; transition: all 0.3s; }
+    .check-step.passed { border-color: #22c55e; background: #f0fdf4; }
+    .check-step.failed { border-color: #ef4444; background: #fef2f2; }
+    .check-step.checking { border-color: #f59e0b; background: #fffbeb; }
+    .check-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+    .check-icon.pending { background: #f1f5f9; color: #94a3b8; }
+    .check-icon.passed { background: #dcfce7; color: #22c55e; }
+    .check-icon.failed { background: #fee2e2; color: #ef4444; }
+    .check-icon.checking { background: #fef3c7; color: #d97706; }
+    .check-body { flex: 1; }
+    .check-title { font-weight: 600; font-size: 0.95rem; }
+    .check-desc { font-size: 0.8rem; color: var(--text-muted); }
+    .check-action { flex-shrink: 0; }
+
+    .camera-preview { width: 160px; height: 120px; border-radius: 12px; background: #000; overflow: hidden; display: none; border: 3px solid #22c55e; }
+    .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
+
+    .agreement-check { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem; background: linear-gradient(135deg, #fefce8, #fef9c3); border: 2px solid #facc15; border-radius: 14px; margin: 1.5rem 0; cursor: pointer; transition: all 0.3s; }
+    .agreement-check:hover { transform: translateY(-1px); }
+    .agreement-check.checked { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-color: #22c55e; }
+    .agreement-check input[type=checkbox] { width: 22px; height: 22px; flex-shrink: 0; accent-color: #22c55e; }
+    .agreement-check label { font-weight: 600; cursor: pointer; font-size: 0.95rem; }
+
+    .start-btn { font-size: 1.15rem; padding: 1rem 2rem; border-radius: 14px; font-weight: 700; transition: all 0.3s; }
+    .start-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .start-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+    .attempts-info { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 1rem 0; font-size: 0.9rem; }
+    .attempts-info .att-badge { background: var(--primary); color: white; padding: 0.15rem 0.6rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; }
+
+    @keyframes pulse-check { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    .check-step.checking .check-icon { animation: pulse-check 1s infinite; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="proctoring-page">
+
+    <!-- Header -->
+    <div class="exam-hero">
+        <div class="exam-hero-icon">📋</div>
+        <h2>{{ exam.title }}</h2>
+        <p class="text-secondary">{{ exam.subject }}</p>
+    </div>
+
+    <!-- Info Grid -->
+    <div class="info-grid">
+        <div class="info-cell">
+            <i class="bi bi-list-ol"></i>
+            <div class="val">{{ exam.get_question_count }}</div>
+            <div class="lbl">سؤال</div>
+        </div>
+        <div class="info-cell">
+            <i class="bi bi-clock"></i>
+            <div class="val">{{ exam.duration }}</div>
+            <div class="lbl">دقيقة</div>
+        </div>
+        <div class="info-cell">
+            <i class="bi bi-award"></i>
+            <div class="val">{{ exam.total_marks }}</div>
+            <div class="lbl">درجة</div>
+        </div>
+        <div class="info-cell">
+            <i class="bi bi-check-circle"></i>
+            <div class="val">{{ exam.pass_mark }}</div>
+            <div class="lbl">حد النجاح</div>
+        </div>
+    </div>
+
+    <!-- Attempts Info -->
+    <div class="attempts-info">
+        <i class="bi bi-repeat text-primary"></i>
+        <span>المحاولات:</span>
+        <span class="att-badge">{{ attempts_used }} / {{ exam.max_attempts }}</span>
+        <span class="text-muted">— المتبقي: {{ attempts_remaining }}</span>
+    </div>
+
+    {% if exam.description %}
+    <div class="terms-box">
+        <div class="terms-title"><i class="bi bi-info-circle text-primary"></i> تعليمات الأستاذ</div>
+        <div class="small">{{ exam.description }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Terms & Conditions -->
+    <div class="terms-box">
+        <div class="terms-title"><i class="bi bi-shield-lock text-danger"></i> شروط وأحكام الاختبار</div>
+        <ul class="terms-list">
+            <li>
+                <div class="t-icon t-danger"><i class="bi bi-camera-video-fill"></i></div>
+                <div>سيتم تشغيل <strong>الكاميرا</strong> طوال فترة الاختبار للمراقبة</div>
+            </li>
+            <li>
+                <div class="t-icon t-warning"><i class="bi bi-mic-fill"></i></div>
+                <div>سيتم تشغيل <strong>الميكروفون</strong> لرصد أي أصوات مشبوهة</div>
+            </li>
+            <li>
+                <div class="t-icon t-danger"><i class="bi bi-window-stack"></i></div>
+                <div><strong>يمنع</strong> فتح تبويبات أو نوافذ أخرى أثناء الاختبار</div>
+            </li>
+            <li>
+                <div class="t-icon t-danger"><i class="bi bi-fullscreen"></i></div>
+                <div>يجب البقاء في <strong>وضع ملء الشاشة</strong> طوال الاختبار</div>
+            </li>
+            <li>
+                <div class="t-icon t-warning"><i class="bi bi-clipboard-x"></i></div>
+                <div><strong>يمنع</strong> نسخ/لصق أو استخدام اختصارات لوحة المفاتيح</div>
+            </li>
+            <li>
+                <div class="t-icon t-info"><i class="bi bi-clock-history"></i></div>
+                <div>سيُغلق الاختبار <strong>تلقائياً</strong> عند انتهاء الوقت المحدد</div>
+            </li>
+            <li>
+                <div class="t-icon t-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div>أي مخالفة يتم <strong>تسجيلها وإبلاغ المشرف</strong> فوراً</div>
+            </li>
+            <li>
+                <div class="t-icon t-green"><i class="bi bi-arrow-counterclockwise"></i></div>
+                <div>لا يمكن <strong>العودة أو التعديل</strong> بعد تسليم الاختبار</div>
+            </li>
+        </ul>
+    </div>
+
+    <!-- System Checks -->
+    <div class="terms-box">
+        <div class="terms-title"><i class="bi bi-gear-fill text-primary"></i> فحوصات النظام</div>
+
+        <!-- Camera Check -->
+        <div class="check-step" id="checkCamera">
+            <div class="check-icon pending" id="iconCamera"><i class="bi bi-camera-video"></i></div>
+            <div class="check-body">
+                <div class="check-title">الكاميرا</div>
+                <div class="check-desc" id="descCamera">يرجى السماح بالوصول للكاميرا</div>
+            </div>
+            <div class="check-action">
+                <button class="btn btn-sm btn-primary" id="btnCamera" onclick="checkCamera()">
+                    <i class="bi bi-play-fill me-1"></i>تفعيل
+                </button>
+            </div>
+            <div class="camera-preview" id="cameraPreview">
+                <video id="cameraVideo" autoplay muted playsinline></video>
+            </div>
+        </div>
+
+        <!-- Mic Check -->
+        <div class="check-step" id="checkMic">
+            <div class="check-icon pending" id="iconMic"><i class="bi bi-mic"></i></div>
+            <div class="check-body">
+                <div class="check-title">الميكروفون</div>
+                <div class="check-desc" id="descMic">يرجى السماح بالوصول للميكروفون</div>
+            </div>
+            <div class="check-action">
+                <button class="btn btn-sm btn-primary" id="btnMic" onclick="checkMic()">
+                    <i class="bi bi-play-fill me-1"></i>تفعيل
+                </button>
+            </div>
+        </div>
+
+        <!-- Fullscreen Check -->
+        <div class="check-step" id="checkFullscreen">
+            <div class="check-icon pending" id="iconFullscreen"><i class="bi bi-fullscreen"></i></div>
+            <div class="check-body">
+                <div class="check-title">ملء الشاشة</div>
+                <div class="check-desc" id="descFullscreen">سيتم تفعيل وضع ملء الشاشة عند بدء الاختبار</div>
+            </div>
+            <div class="check-action">
+                <span class="badge bg-secondary" id="badgeFullscreen">تلقائي</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agreement -->
+    <div class="agreement-check" id="agreementBox" onclick="toggleAgreement()">
+        <input type="checkbox" id="agreeCheck">
+        <label for="agreeCheck">أقر بأنني قرأت وأوافق على جميع الشروط والأحكام أعلاه، وأتعهد بالالتزام بقواعد النزاهة الأكاديمية</label>
+    </div>
+    <div class="alert alert-info d-flex align-items-center gap-2 rounded-3 small" style="border-radius: 14px !important;">
+        <i class="bi bi-info-circle-fill fs-5"></i>
+        <span>عند بدء الاختبار، سيتم تفعيل <strong>وضع ملء الشاشة</strong> و<strong>نظام المراقبة الذكي</strong> تلقائياً. يرجى التأكد من استقرار اتصال الإنترنت.</span>
+    </div>
+
+    <!-- Start Button -->
+    <form method="post" id="startForm">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary start-btn w-100" id="startBtn" disabled>
+            <i class="bi bi-play-circle-fill me-2"></i>ابدأ الاختبار الآن
+        </button>
+    </form>
+    <a href="{% url 'dashboard' %}" class="btn btn-ghost mt-2 w-100">العودة للرئيسية</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cameraOk = false, micOk = false, agreed = false;
+let cameraStream = null, micStream = null;
+
+function updateStartBtn() {
+    const btn = document.getElementById('startBtn');
+    btn.disabled = !(cameraOk && micOk && agreed);
+}
+
+function setCheckState(id, state, desc) {
+    const step = document.getElementById('check' + id);
+    const icon = document.getElementById('icon' + id);
+    const descEl = document.getElementById('desc' + id);
+    step.className = 'check-step ' + state;
+    icon.className = 'check-icon ' + state;
+    if (desc) descEl.textContent = desc;
+}
+
+function checkCamera() {
+    setCheckState('Camera', 'checking', 'جارٍ تفعيل الكاميرا...');
+    document.getElementById('btnCamera').disabled = true;
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            cameraStream = stream;
+            cameraOk = true;
+            setCheckState('Camera', 'passed', '✓ الكاميرا تعمل بنجاح');
+            const preview = document.getElementById('cameraPreview');
+            preview.style.display = 'block';
+            document.getElementById('cameraVideo').srcObject = stream;
+            document.getElementById('btnCamera').style.display = 'none';
+            setCheckState('Fullscreen', 'passed', '✓ جاهز — سيتم التفعيل عند البدء');
+            updateStartBtn();
+        })
+        .catch(err => {
+            setCheckState('Camera', 'failed', '✗ فشل الوصول للكاميرا — يرجى السماح بالإذن');
+            document.getElementById('btnCamera').disabled = false;
+            document.getElementById('btnCamera').textContent = 'إعادة المحاولة';
+        });
+}
+
+function checkMic() {
+    setCheckState('Mic', 'checking', 'جارٍ تفعيل الميكروفون...');
+    document.getElementById('btnMic').disabled = true;
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            micStream = stream;
+            micOk = true;
+            setCheckState('Mic', 'passed', '✓ الميكروفون يعمل بنجاح');
+            document.getElementById('btnMic').style.display = 'none';
+            updateStartBtn();
+        })
+        .catch(err => {
+            setCheckState('Mic', 'failed', '✗ فشل الوصول للميكروفون — يرجى السماح بالإذن');
+            document.getElementById('btnMic').disabled = false;
+            document.getElementById('btnMic').textContent = 'إعادة المحاولة';
+        });
+}
+
+function toggleAgreement() {
+    const cb = document.getElementById('agreeCheck');
+    cb.checked = !cb.checked;
+    agreed = cb.checked;
+    const box = document.getElementById('agreementBox');
+    if (agreed) box.classList.add('checked');
+    else box.classList.remove('checked');
+    updateStartBtn();
+}
+
+// Request fullscreen on submit
+document.getElementById('startForm').addEventListener('submit', function(e) {
+    if (!cameraOk || !micOk || !agreed) {
+        e.preventDefault();
+        return;
+    }
+    // Enter fullscreen
+    try {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+    } catch(err) {}
+});
+</script>
+{% endblock %}

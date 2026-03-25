@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام الاختبارات الجامعي{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    {% load static %}
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+<!-- Sidebar -->
+<div class="d-flex" id="layout-wrapper">
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-logo">🎓</div>
+            <div>
+                <div class="sidebar-title">نظام الاختبارات</div>
+                <div class="sidebar-sub">الجامعة التقنية</div>
+            </div>
+        </div>
+        <hr class="sidebar-divider">
+        <ul class="sidebar-nav">
+            {% with profile=request.user.profile %}
+            <li><a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-house-fill"></i> لوحة التحكم
+            </a></li>
+
+            {% if profile.role == 'admin' %}
+            <li class="sidebar-section">الاختبارات</li>
+            <li><a href="{% url 'exam_list' %}" class="sidebar-link {% if 'exam' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-clipboard-fill"></i> الاختبارات
+            </a></li>
+            <li><a href="{% url 'exam_create' %}" class="sidebar-link">
+                <i class="bi bi-plus-circle-fill"></i> إنشاء اختبار
+            </a></li>
+            <li class="sidebar-section">المتابعة</li>
+            <li><a href="{% url 'results_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'results_list' %}active{% endif %}">
+                <i class="bi bi-graph-up"></i> النتائج والتصحيح
+            </a></li>
+            <li><a href="{% url 'monitoring' %}" class="sidebar-link {% if request.resolver_match.url_name == 'monitoring' %}active{% endif %}">
+                <i class="bi bi-shield-fill-check"></i> المراقبة المباشرة
+            </a></li>
+            <li><a href="{% url 'students_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'students_list' %}active{% endif %}">
+                <i class="bi bi-people-fill"></i> الطلاب
+            </a></li>
+            {% else %}
+            <li class="sidebar-section">اختباراتي</li>
+            <li><a href="{% url 'dashboard' %}" class="sidebar-link">
+                <i class="bi bi-clipboard2-check-fill"></i> اختباراتي المتاحة
+            </a></li>
+            <li><a href="{% url 'results_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'results_list' %}active{% endif %}">
+                <i class="bi bi-bar-chart-fill"></i> نتائجي
+            </a></li>
+            {% endif %}
+            
+            <li class="sidebar-section">معلومات ودعم</li>
+            <li><a href="{% url 'about_system' %}" class="sidebar-link {% if request.resolver_match.url_name == 'about_system' %}active{% endif %}">
+                <i class="bi bi-info-circle-fill"></i> حول النظام
+            </a></li>
+            <li><a href="#" class="sidebar-link" data-bs-toggle="modal" data-bs-target="#contactAdminModal">
+                <i class="bi bi-headset"></i> الدعم الفني
+            </a></li>
+            {% endwith %}
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">
+                    {% if user.profile.role == 'admin' %}👨‍🏫{% else %}👨‍🎓{% endif %}
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="sidebar-username">{{ user.get_full_name|default:user.username }}</div>
+                    <div class="sidebar-role">{{ user.profile.get_role_display }}</div>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm w-100 mt-2">
+                <i class="bi bi-box-arrow-left"></i> تسجيل الخروج
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="main-content flex-grow-1">
+        <!-- Top bar -->
+        <div class="topbar">
+            <button class="btn btn-sm btn-ghost sidebar-toggle" id="sidebarToggle">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <nav aria-label="breadcrumb" class="ms-auto me-3">
+                <ol class="breadcrumb mb-0 small">
+                    {% block breadcrumb %}
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">الرئيسية</a></li>
+                    {% endblock %}
+                </ol>
+            </nav>
+            <div class="topbar-user d-flex align-items-center gap-2">
+                <span class="text-muted small">{{ user.get_full_name|default:user.username }}</span>
+                <!-- Notifications -->
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-ghost position-relative" data-bs-toggle="dropdown" id="notifBtn">
+                        <i class="bi bi-bell fs-5"></i>
+                        <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle d-none" id="notifBadge" style="font-size:0.65rem">0</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg" style="width:320px;max-height:400px;overflow-y:auto;border-radius:12px" id="notifDropdown">
+                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                            <h6 class="mb-0 fw-bold">الإشعارات</h6>
+                            <button class="btn btn-sm btn-ghost text-primary" id="markAllRead" style="font-size:0.8rem">تحديد الكل كمقروء</button>
+                        </div>
+                        <div id="notifList" class="py-1">
+                            <div class="text-center text-muted py-3 small">لا توجد إشعارات</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'profile' %}" class="btn btn-sm btn-ghost"><i class="bi bi-person-circle fs-5"></i></a>
+            </div>
+        </div>
+
+        <div class="page-content">
+            {% if messages %}
+            {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% else %}
+{% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% load static %}
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+// Notifications polling
+function loadNotifications() {
+    fetch('{% url "notifications_api" %}')
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById('notifBadge');
+            const list = document.getElementById('notifList');
+            if (data.unread_count > 0) {
+                badge.textContent = data.unread_count;
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+            if (data.notifications.length === 0) {
+                list.innerHTML = '<div class="text-center text-muted py-3 small">لا توجد إشعارات</div>';
+            } else {
+                list.innerHTML = data.notifications.map(n => {
+                    const icons = {new_exam:'📋',result_ready:'✅',exam_reminder:'⏰',grading_done:'📝'};
+                    return `<a href="${n.link||'#'}" class="dropdown-item d-flex gap-2 py-2 px-3 ${!n.is_read?'bg-light':''} text-wrap" style="font-size:0.85rem">
+                        <span>${icons[n.type]||'🔔'}</span>
+                        <div>
+                            <div class="fw-bold">${n.title}</div>
+                            <div class="text-muted" style="font-size:0.75rem">${n.created_at}</div>
+                        </div>
+                    </a>`;
+                }).join('');
+            }
+        }).catch(() => {});
+}
+loadNotifications();
+setInterval(loadNotifications, 30000);
+
+document.getElementById('markAllRead')?.addEventListener('click', () => { fetch('{% url "mark_notifications_read" %}', 
+    {
+        method: 'POST',
+        headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}'}
+    }).then(() => loadNotifications());
+});
+</script>
+{% block extra_js %}{% endblock %}
+<!-- Contact Admin Modal -->
+<div class="modal fade" id="contactAdminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-headset me-2 text-primary"></i>تواصل مع الإدارة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-4">هل لديك استفسار أو واجهت مشكلة؟ أرسل رسالتك وسنقوم بالرد عليك في أقرب وقت.</p>
+                <div class="mb-3">
+                    <label class="form-label x-small fw-bold text-muted text-uppercase">الموضوع</label>
+                    <div class="premium-input-group">
+                        <input type="text" id="contactSubject" class="form-control" placeholder="مثال: استفسار عن رصد الدرجات">
+                        <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label x-small fw-bold text-muted text-uppercase">الرسالة</label>
+                    <textarea id="contactMessage" class="form-control rounded-3" rows="4" placeholder="اكتب تفاصيل سؤالك هنا..."></textarea>
+                </div>
+                <button type="button" id="btnSubmitContact" class="btn btn-primary w-100 rounded-3 py-2 fw-bold shadow-sm mt-2">
+                    <i class="bi bi-send-fill me-2"></i> إرسال الرسالة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('btnSubmitContact')?.addEventListener('click', function() {
+    const subject = document.getElementById('contactSubject').value;
+    const message = document.getElementById('contactMessage').value;
+    
+    if(!subject || !message) {
+        alert('يرجى ملء كافة الحقول');
+        return;
+    }
+
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> جاري الإرسال...';
+
+    fetch('{% url "contact_api_submit" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ subject: subject, message: message })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.status === 'success') {
+            alert(data.msg);
+            bootstrap.Modal.getInstance(document.getElementById('contactAdminModal')).hide();
+            document.getElementById('contactSubject').value = '';
+            document.getElementById('contactMessage').value = '';
+        } else {
+            alert('خطأ: ' + data.msg);
+        }
+    })
+    .finally(() => {
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-send-fill me-2"></i> إرسال الرسالة';
+    });
+});
+</script>
+</body>
+</html>

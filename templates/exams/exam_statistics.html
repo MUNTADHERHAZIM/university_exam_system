@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}إحصائيات: {{ exam.title }}{% endblock %}
+{% block extra_css %}
+<style>
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-box { background: var(--surface); border-radius: 16px; padding: 1.5rem; text-align: center; border: 1px solid var(--border); transition: transform 0.2s; }
+    .stat-box:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+    .stat-box .stat-num { font-size: 2rem; font-weight: 700; line-height: 1.2; }
+    .stat-box .stat-lbl { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .chart-container { background: var(--surface); border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+    .chart-title { font-weight: 600; font-size: 1rem; margin-bottom: 1rem; color: var(--text-main); }
+    .difficulty-bar { height: 8px; border-radius: 4px; background: #e2e8f0; overflow: hidden; }
+    .difficulty-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+    .diff-easy { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .diff-medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .diff-hard { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .q-stat-item { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .q-stat-item:last-child { border-bottom: none; }
+    .pass-fail-chart { display: flex; gap: 1rem; align-items: center; justify-content: center; }
+    .pf-circle { width: 120px; height: 120px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; }
+    .pf-pass { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #16a34a; }
+    .pf-fail { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #dc2626; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">📊 إحصائيات: {{ exam.title }}</h1>
+        <p class="page-sub">{{ exam.subject }} • تحليل شامل لأداء الطلاب</p>
+    </div>
+    <a href="{% url 'exam_edit' exam.pk %}" class="btn btn-ghost"><i class="bi bi-arrow-right me-1"></i>العودة للاختبار</a>
+</div>
+
+{% if no_data %}
+<div class="card-panel text-center py-5">
+    <i class="bi bi-bar-chart-line fs-1 d-block mb-3 text-muted"></i>
+    <h5>لا توجد بيانات بعد</h5>
+    <p class="text-muted">لم يقدم أي طالب هذا الاختبار حتى الآن.</p>
+</div>
+{% else %}
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-box">
+        <div class="stat-num" style="color: var(--primary)">{{ total_attempts }}</div>
+        <div class="stat-lbl">إجمالي المحاولات</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-num" style="color: #6366f1">{{ avg_score }}</div>
+        <div class="stat-lbl">متوسط الدرجات</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-num" style="color: #22c55e">{{ max_score }}</div>
+        <div class="stat-lbl">أعلى درجة</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-num" style="color: #ef4444">{{ min_score }}</div>
+        <div class="stat-lbl">أدنى درجة</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-num" style="color: #16a34a">{{ pass_rate }}%</div>
+        <div class="stat-lbl">نسبة النجاح</div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Pass/Fail Chart -->
+    <div class="col-md-4">
+        <div class="chart-container">
+            <div class="chart-title"><i class="bi bi-pie-chart-fill me-2"></i>نسبة النجاح والرسوب</div>
+            <canvas id="passFailChart" height="220"></canvas>
+            <div class="pass-fail-chart mt-3">
+                <div class="pf-circle pf-pass">
+                    <div class="fs-4">{{ passed_count }}</div>
+                    <div class="small">ناجح</div>
+                </div>
+                <div class="pf-circle pf-fail">
+                    <div class="fs-4">{{ failed_count }}</div>
+                    <div class="small">راسب</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Distribution -->
+    <div class="col-md-4">
+        <div class="chart-container">
+            <div class="chart-title"><i class="bi bi-bar-chart-fill me-2"></i>توزيع التقديرات</div>
+            <canvas id="gradeChart" height="280"></canvas>
+        </div>
+    </div>
+
+    <!-- Score Distribution -->
+    <div class="col-md-4">
+        <div class="chart-container">
+            <div class="chart-title"><i class="bi bi-graph-up me-2"></i>توزيع الدرجات</div>
+            <canvas id="scoreChart" height="280"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Question Difficulty -->
+<div class="card-panel mt-4">
+    <div class="panel-header">
+        <h6 class="panel-title"><i class="bi bi-speedometer2 me-2"></i>تحليل صعوبة الأسئلة</h6>
+    </div>
+    <div class="panel-body p-0">
+        {% for qs in question_stats %}
+        <div class="q-stat-item">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <span class="badge bg-primary small me-1">س{{ forloop.counter }}</span>
+                    <span class="text-muted small">{{ qs.question.text|truncatechars:60 }}</span>
+                </div>
+                <div class="text-end">
+                    <span class="fw-bold {% if qs.difficulty > 70 %}text-danger{% elif qs.difficulty > 40 %}text-warning{% else %}text-success{% endif %}">
+                        {{ qs.difficulty }}%
+                    </span>
+                    <span class="text-muted small d-block">{{ qs.correct }}/{{ qs.total }} صحيح</span>
+                </div>
+            </div>
+            <div class="difficulty-bar">
+                <div class="difficulty-fill {% if qs.difficulty > 70 %}diff-hard{% elif qs.difficulty > 40 %}diff-medium{% else %}diff-easy{% endif %}"
+                     style="width:{{ qs.difficulty }}%;"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if not no_data %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const chartFont = { family: 'Tajawal, sans-serif' };
+    Chart.defaults.font.family = 'Tajawal, sans-serif';
+
+    // Pass/Fail Doughnut
+    new Chart(document.getElementById('passFailChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['ناجح', 'راسب'],
+            datasets: [{
+                data: [{{ passed_count }}, {{ failed_count }}],
+                backgroundColor: ['#22c55e', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: { legend: { position: 'bottom', labels: { font: chartFont, padding: 15 } } }
+        }
+    });
+
+    // Grade Bar Chart
+    new Chart(document.getElementById('gradeChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ grade_labels|safe }},
+            datasets: [{
+                label: 'عدد الطلاب',
+                data: {{ grade_values|safe }},
+                backgroundColor: ['#22c55e', '#4ade80', '#86efac', '#fde047', '#fbbf24', '#f59e0b', '#fb923c', '#f87171', '#ef4444'],
+                borderRadius: 8,
+                barThickness: 30,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1, font: chartFont } },
+                x: { ticks: { font: Object.assign({}, chartFont, { weight: 'bold' }) } }
+            }
+        }
+    });
+
+    // Score Distribution
+    new Chart(document.getElementById('scoreChart'), {
+        type: 'line',
+        data: {
+            labels: ['0-9%', '10-19%', '20-29%', '30-39%', '40-49%', '50-59%', '60-69%', '70-79%', '80-89%', '90-100%'],
+            datasets: [{
+                label: 'عدد الطلاب',
+                data: {{ score_buckets|safe }},
+                fill: true,
+                backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                borderColor: '#6366f1',
+                borderWidth: 2,
+                tension: 0.4,
+                pointBackgroundColor: '#6366f1',
+                pointRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1, font: chartFont } },
+                x: { ticks: { font: { ...chartFont, size: 10 }, maxRotation: 45 } }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

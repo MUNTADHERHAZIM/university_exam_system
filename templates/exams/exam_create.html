@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}إنشاء اختبار جديد{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">إنشاء اختبار جديد</h1>
+    <p class="page-sub">أدخل المعلومات الأساسية للاختبار</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card-panel">
+            <div class="panel-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">عنوان الاختبار *</label>
+                            <input type="text" name="title" class="form-control" placeholder="مثال: الاختبار النهائي - أسس البرمجة" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">المادة / التخصص (نص حر)</label>
+                            <input type="text" name="subject" class="form-control" placeholder="مثال: علوم الحاسوب" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">المقرر الأكاديمي المعتمد (اختياري)</label>
+                            <select name="course" class="form-select">
+                                <option value="">-- اختر المقرر --</option>
+                                {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.name }} ({{ course.department.name }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">المدة (بالدقائق)</label>
+                            <input type="number" name="duration" class="form-control" value="90" min="5" max="360">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الدرجة الكلية</label>
+                            <input type="number" name="total_marks" class="form-control" value="100" min="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">درجة النجاح</label>
+                            <input type="number" name="pass_mark" class="form-control" value="50" min="1">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">الوصف / التعليمات (اختياري)</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="تعليمات الاختبار للطلاب..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="shuffle_questions" id="shuffle">
+                                <label class="form-check-label" for="shuffle">ترتيب عشوائي للأسئلة</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="allow_review" id="allow_review" checked>
+                                <label class="form-check-label" for="allow_review">السماح بمراجعة الأسئلة</label>
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex gap-2 mt-2">
+                            <button type="submit" class="btn btn-gold flex-grow-1">
+                                <i class="bi bi-arrow-left-circle-fill me-2"></i>إنشاء والانتقال لإضافة الأسئلة
+                            </button>
+                            <a href="{% url 'exam_list' %}" class="btn btn-ghost">إلغاء</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

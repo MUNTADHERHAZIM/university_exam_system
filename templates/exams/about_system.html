@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}حول النظام - University Exam System{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <!-- Hero Section -->
+    <div class="text-center mb-5 pb-3">
+        <div class="mb-4">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#D4AF37" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <h1 class="display-4 fw-bold mb-3">نظام الامتحانات الجامعي المتكامل</h1>
+        <p class="lead text-muted mx-auto" style="max-width: 700px;">
+            منصة ذكية متطورة لإدارة وتأدية الاختبارات الأكاديمية بمعايير عالمية، تضمن النزاهة، السهولة، والدقة في التقييم.
+        </p>
+    </div>
+
+    <!-- Features Grid -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card-panel h-100 text-center p-4">
+                <div class="mb-3 text-gold fs-1">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                </div>
+                <h5>حماية ونزاهة عالية</h5>
+                <p class="text-muted small">نظام مراقبة تفاعلي يكتشف محاولات الغش وتغيير التبويبات تلقائياً مع تسجيل المخالفات.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-panel h-100 text-center p-4">
+                <div class="mb-3 text-primary fs-1">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                </div>
+                <h5>هيكلية أكاديمية منظمة</h5>
+                <p class="text-muted small">تنظيم الاختبارات حسب الكليات والأقسام والمواد لسهولة الإدارة والوصول للمعلومات.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-panel h-100 text-center p-4">
+                <div class="mb-3 text-success fs-1">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                </div>
+                <h5>تقارير وإحصائيات</h5>
+                <p class="text-muted small">تحليل كامل لنتائج الطلاب ومستويات الأداء مع إمكانية تصدير النتائج بضغطة زر.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-5">
+        <!-- FAQ Section -->
+        <div class="col-lg-7">
+            <h3 class="mb-4"><i class="bi bi-question-circle-fill me-2 text-warning"></i>الأسئلة الشائعة</h3>
+            <div class="accordion accordion-flush card-panel p-2" id="faqAccordion">
+                {% for faq in faqs %}
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq-{{ forloop.counter }}">
+                            {{ faq.q }}
+                        </button>
+                    </h2>
+                    <div id="faq-{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted pt-0">
+                            {{ faq.a }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="col-lg-5">
+            <h3 class="mb-4"><i class="bi bi-envelope-at-fill me-2 text-primary"></i>تواصل معنا</h3>
+            <div class="card-panel p-4 bg-light border-0">
+                <p class="mb-4 text-muted">لديك استفسار أو واجهت مشكلة تقنية؟ فريق الدعم الفني متواجد لمساعدتك.</p>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-white p-2 rounded-3 shadow-sm me-3">
+                        <i class="bi bi-geo-alt-fill text-danger fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="small fw-bold">الموقع</div>
+                        <div class="text-muted small">جامعة تكنولوجيا المعلومات - المبنى الرئيسي</div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-white p-2 rounded-3 shadow-sm me-3">
+                        <i class="bi bi-telephone-fill text-success fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="small fw-bold">الهاتف</div>
+                        <div class="text-muted small">800-UNIV-EXAM</div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-white p-2 rounded-3 shadow-sm me-3">
+                        <i class="bi bi-envelope-fill text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="small fw-bold">البريد الإلكتروني</div>
+                        <div class="text-muted small">support@univ-exam.edu</div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-top">
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-outline-dark btn-sm rounded-circle"><i class="bi bi-github"></i></a>
+                        <a href="#" class="btn btn-outline-primary btn-sm rounded-circle"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="btn btn-outline-info btn-sm rounded-circle text-white"><i class="bi bi-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

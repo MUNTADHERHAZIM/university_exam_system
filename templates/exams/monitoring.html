@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block title %}المراقبة المباشرة{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">المراقبة المباشرة <span class="live-badge">LIVE</span></h1>
+        <p class="page-sub">
+            <span class="live-dot"></span>
+            {{ active_attempts|length }} طالب يؤدي الاختبار الآن
+        </p>
+    </div>
+    <button class="btn btn-ghost" onclick="refreshMonitor()"><i class="bi bi-arrow-clockwise me-1"></i>تحديث</button>
+</div>
+
+<div id="monitorGrid" class="row g-3">
+    {% for attempt in active_attempts %}
+    <div class="col-xl-4 col-md-6">
+        <div class="monitor-card {% if attempt.violations_count >= 3 %}monitor-danger{% elif attempt.violations_count >= 1 %}monitor-warning{% endif %}" id="mc_{{ attempt.id }}">
+            <div class="monitor-card-header">
+                <div>
+                    <div class="fw-bold">👤 {{ attempt.student.get_full_name }}</div>
+                    <div class="text-muted small">{{ attempt.exam.title }}</div>
+                </div>
+                <div class="monitor-timer {% if attempt.time_remaining < 300 %}text-danger{% elif attempt.time_remaining < 600 %}text-warning{% else %}text-success{% endif %}"
+                     id="timer_{{ attempt.id }}" data-remaining="{{ attempt.time_remaining }}">
+                    {{ attempt.time_remaining|floatformat:0 }}
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-muted">التقدم</span>
+                    <span class="text-warning fw-bold">{{ attempt.progress }}%</span>
+                </div>
+                <div class="progress" style="height:6px">
+                    <div class="progress-bar bg-warning" style="width:{{ attempt.progress }}%"></div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    {% if attempt.violations_count > 0 %}
+                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ attempt.violations_count }} مخالفة</span>
+                    {% else %}
+                    <span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>نظيف</span>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-1">
+                    {% if attempt.violations_count >= 3 %}
+                    <form method="post" action="{% url 'force_submit' attempt.pk %}" onsubmit="return confirm('إنهاء جلسة الطالب؟')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger">إنهاء الجلسة</button>
+                    </form>
+                    {% endif %}
+                    <button class="btn btn-sm btn-outline-primary" onclick="openMonitorChat({{ attempt.id }}, '{{ attempt.student.get_full_name }}')">
+                        <i class="bi bi-chat-fill"></i>
+                    </button>
+                    <a href="{% url 'exam_result' attempt.pk %}" class="btn btn-sm btn-ghost"><i class="bi bi-eye"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5 text-muted">
+        <i class="bi bi-shield-check fs-1 d-block mb-3" style="color:var(--gold)"></i>
+        <h5>لا يوجد طلاب يؤدون الاختبار حالياً</h5>
+        <p>ستظهر هنا الجلسات النشطة فور بدء الطلاب</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Proctor Chat Modal -->
+<div class="modal fade" id="monitorChatModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:20px; overflow:hidden;">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="chatStudentName">الدردشة</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" style="height:450px; display:flex; flex-direction:column;">
+                <div id="monitorChatBody" class="flex-grow-1 p-3 overflow-auto" style="background:#f1f5f9; display:flex; flex-direction:column; gap:10px;">
+                    <!-- Messages -->
+                </div>
+                <div class="p-3 border-top bg-white d-flex gap-2">
+                    <input type="text" id="monitorChatInput" class="form-control" placeholder="اكتب ردك هنا..." onkeypress="if(event.key==='Enter') sendMonitorChat()">
+                    <button class="btn btn-primary px-4" onclick="sendMonitorChat()"><i class="bi bi-send"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-bubble { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 0.95rem; }
+    .chat-bubble.me { align-self: flex-end; background: var(--main); color: white; border-bottom-right-radius: 2px; }
+    .chat-bubble.other { align-self: flex-start; background: white; color: #334155; border: 1px solid #e2e8f0; border-bottom-left-radius: 2px; }
+    .chat-time { font-size: 0.75rem; opacity: 0.7; display: block; margin-top: 4px; }
+</style>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+// Format seconds as MM:SS
+function fmtTime(s) {
+    const m = Math.floor(s/60);
+    const sec = s % 60;
+    return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+
+// Countdown all timers
+document.querySelectorAll('.monitor-timer').forEach(el => {
+    let remaining = parseInt(el.dataset.remaining);
+    el.textContent = fmtTime(remaining);
+    setInterval(() => {
+        remaining = Math.max(0, remaining - 1);
+        el.textContent = fmtTime(remaining);
+        if (remaining < 300) el.classList.add('text-danger');
+        if (remaining < 600) el.classList.add('text-warning');
+    }, 1000);
+});
+
+// ── Proctor Chat Logic ─────────────────────────────────────────────
+let currentChatAttemptId = null;
+let chatInterval = null;
+
+function openMonitorChat(attemptId, studentName) {
+    currentChatAttemptId = attemptId;
+    document.getElementById('chatStudentName').textContent = 'الدردشة مع: ' + studentName;
+    const modal = new bootstrap.Modal(document.getElementById('monitorChatModal'));
+    modal.show();
+    
+    // Initial load
+    loadMonitorChat();
+    
+    // Clear and start interval
+    if (chatInterval) clearInterval(chatInterval);
+    chatInterval = setInterval(loadMonitorChat, 3000);
+}
+
+// Stop interval when modal closes
+document.getElementById('monitorChatModal').addEventListener('hidden.bs.modal', () => {
+    if (chatInterval) clearInterval(chatInterval);
+    currentChatAttemptId = null;
+});
+
+async function loadMonitorChat() {
+    if (!currentChatAttemptId) return;
+    try {
+        const res = await fetch(`/attempts/${currentChatAttemptId}/chat/messages/`);
+        const data = await res.json();
+        const body = document.getElementById('monitorChatBody');
+        let html = '';
+
+        data.messages.forEach(m => {
+            html += `
+                <div class="chat-bubble ${m.is_me ? 'me' : 'other'}">
+                    <div class="fw-bold small mb-1">${m.sender}</div>
+                    <div>${m.message}</div>
+                    <span class="chat-time">${m.timestamp}</span>
+                </div>
+            `;
+        });
+
+        if (html) body.innerHTML = html;
+        body.scrollTop = body.scrollHeight;
+    } catch (err) { console.error("Monitor chat load error", err); }
+}
+
+async function sendMonitorChat() {
+    const input = document.getElementById('monitorChatInput');
+    const text = input.value.trim();
+    if (!text || !currentChatAttemptId) return;
+
+    input.value = '';
+    try {
+        const res = await fetch(`/attempts/${currentChatAttemptId}/chat/send/`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ message: text })
+        });
+        if (res.ok) loadMonitorChat();
+    } catch (err) { console.error("Monitor chat send error", err); }
+}
+</script>
+{% endblock %}

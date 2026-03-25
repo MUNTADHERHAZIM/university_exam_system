@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}اختباراتي{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">اختباراتي المتاحة</h1>
+    <p class="page-sub">مرحباً {{ request.user.get_full_name|default:request.user.username }} 👋</p>
+</div>
+
+{% if my_attempts %}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-gold"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ my_attempts.count }}</div>
+                <div class="stat-label">اختبارات أديتها</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-green"><i class="bi bi-trophy-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ passed_count }}</div>
+                <div class="stat-label">اجتزتها بنجاح</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue"><i class="bi bi-clipboard-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ available_exams.count }}</div>
+                <div class="stat-label">اختبارات متاحة</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    {% for exam in available_exams %}
+    <div class="col-xl-4 col-md-6">
+        <div class="exam-card">
+            <div class="exam-card-header">
+                <span class="badge badge-gold">{{ exam.subject }}</span>
+                {% if exam.pk in attempted_exam_ids %}
+                <span class="badge badge-green"><i class="bi bi-check-lg"></i> مكتمل</span>
+                {% else %}
+                <span class="badge badge-blue"><i class="bi bi-circle-fill"></i> متاح</span>
+                {% endif %}
+            </div>
+            <h5 class="exam-card-title">{{ exam.title }}</h5>
+            {% if exam.description %}
+            <p class="exam-card-desc">{{ exam.description|truncatechars:80 }}</p>
+            {% endif %}
+            <div class="exam-card-meta">
+                <span><i class="bi bi-list-ol me-1"></i>{{ exam.get_question_count }} سؤال</span>
+                <span><i class="bi bi-clock me-1"></i>{{ exam.duration }} دقيقة</span>
+                <span><i class="bi bi-award me-1"></i>{{ exam.total_marks }} درجة</span>
+                <span><i class="bi bi-repeat me-1"></i>{{ exam.max_attempts }} محاولات</span>
+            </div>
+
+            {% if exam.end_date %}
+            <div class="small text-muted mt-2" id="countdown-{{ exam.pk }}">
+                <i class="bi bi-calendar-event me-1"></i>ينتهي: {{ exam.end_date|date:"Y/m/d H:i" }}
+            </div>
+            {% endif %}
+
+            {% if exam.pk in attempted_exam_ids %}
+            {% for a in my_attempts %}
+            {% if a.exam_id == exam.pk %}
+            <div class="exam-card-result">
+                <div class="result-score">{{ a.final_score|default:0|floatformat:0 }}/{{ exam.total_marks }}</div>
+                <div class="result-grade grade-{{ a.grade|lower }}">{{ a.grade }}</div>
+            </div>
+            <a href="{% url 'exam_result' a.pk %}" class="btn btn-outline-secondary w-100 mt-2">
+                <i class="bi bi-eye me-1"></i>عرض النتيجة
+            </a>
+            {% endif %}
+            {% endfor %}
+            {% else %}
+            <a href="{% url 'exam_start' exam.pk %}" class="btn btn-gold w-100 mt-3">
+                <i class="bi bi-play-fill me-1"></i>ابدأ الاختبار
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-clipboard2-x fs-1 d-block mb-3"></i>
+            <h5>لا توجد اختبارات متاحة حالياً</h5>
+            <p>تواصل مع أستاذك لمعرفة موعد الاختبار القادم</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
