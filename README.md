@@ -17,18 +17,6 @@ chmod +x start.sh
 
 ---
 
-## 👤 بيانات الدخول
-
-| الدور | اسم المستخدم | كلمة المرور |
-|-------|-------------|-------------|
-| مشرف / أستاذ | `admin` | `admin123` |
-| طالب | `ahmed` | `1234` |
-| طالب | `fatima` | `1234` |
-| طالب | `mohammed` | `1234` |
-| لوحة الإدارة | `admin` | `admin123` → `/admin/` |
-
----
-
 ## ✨ المميزات الكاملة
 
 ### للمشرف / الأستاذ
@@ -122,3 +110,4 @@ python manage.py migrate
 python manage.py seed_data
 python manage.py runserver
 ```
+## muntadher hazim
