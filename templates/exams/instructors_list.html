@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 text-gray-800">قائمة الهيئة التدريسية والمراقبين</h1>
     <div>
-        <a href="{% url 'generate_single_account' %}" class="btn btn-primary shadow-sm badge-gold text-dark">
+        <a href="{% url 'generate_single_account' %}" class="btn btn-primary shadow-sm badge-gold text-body-emphasis">
             <i class="bi bi-person-plus-fill me-1"></i> إضافة مشرف جديد
         </a>
     </div>
@@ -78,7 +78,7 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
+                <thead class="bg-body-secondary">
                     <tr>
                         <th class="ps-3 border-0">المشرف</th>
                         <th class="border-0">اسم المستخدم</th>
@@ -102,12 +102,12 @@
                                 </div>
                             </div>
                         </td>
-                        <td><span class="badge bg-light text-dark border">{{ p.username }}</span></td>
+                        <td><span class="badge bg-body-secondary text-body-emphasis border">{{ p.username }}</span></td>
                         <td>
                             {% if p.profile.role == 'admin' %}
                                 <span class="badge bg-primary">أستاذ / رئيس قسم</span>
                             {% else %}
-                                <span class="badge bg-info text-dark">مراقب / مصحح</span>
+                                <span class="badge bg-info text-body-emphasis">مراقب / مصحح</span>
                             {% endif %}
                         </td>
                         <td class="text-muted small">{{ p.profile.get_college_name|default:"-" }}</td>

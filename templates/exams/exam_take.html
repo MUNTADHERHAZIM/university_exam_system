@@ -129,7 +129,7 @@
                     <div class="d-flex align-items-center gap-2">
                         <div class="q-number-badge">{{ forloop.counter }}</div>
                         <span
-                            class="badge {% if q.question_type in 'mcq_single,mcq_multi' %}bg-primary{% elif q.question_type in 'essay,short_answer' %}bg-warning text-dark{% elif q.question_type == 'true_false' %}bg-success{% else %}bg-info text-dark{% endif %}">
+                            class="badge {% if q.question_type in 'mcq_single,mcq_multi' %}bg-primary{% elif q.question_type in 'essay,short_answer' %}bg-warning text-body-emphasis{% elif q.question_type == 'true_false' %}bg-success{% else %}bg-info text-body-emphasis{% endif %}">
                             {{ q.get_question_type_display }}
                         </span>
                         {% if not q.is_auto_graded %}

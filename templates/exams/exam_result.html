@@ -101,7 +101,7 @@
                                 {% else %}dot-partial{% endif %}
                             {% else %}dot-pending{% endif %}">
                         </div>
-                        <span class="badge {% if answer.question.question_type in 'mcq_single,mcq_multi' %}bg-primary{% elif answer.question.question_type in 'essay,short_answer' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %} small">
+                        <span class="badge {% if answer.question.question_type in 'mcq_single,mcq_multi' %}bg-primary{% elif answer.question.question_type in 'essay,short_answer' %}bg-warning text-body-emphasis{% else %}bg-info text-body-emphasis{% endif %} small">
                             {{ answer.question.get_question_type_display }}
                         </span>
                         <span class="text-muted small">{{ answer.question.text|striptags|truncatechars:70 }}</span>

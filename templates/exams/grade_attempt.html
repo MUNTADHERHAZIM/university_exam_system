@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}تصحيح: {{ attempt.student.get_full_name }}{% endblock %}
+{% block title %}تصحيح: {{ attempt.get_student_display_name }}{% endblock %}
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center">
     <div>
         <h1 class="page-title">التصحيح اليدوي</h1>
-        <p class="page-sub">{{ attempt.student.get_full_name }} • {{ exam.title }}</p>
+        <p class="page-sub">{{ attempt.get_student_display_name }} • {{ exam.title }}</p>
     </div>
     <div class="d-flex gap-2 align-items-center">
-        <div class="badge bg-white border border-primary text-primary fs-6 px-3 py-2 shadow-sm">
+        <div class="badge bg-body-tertiary border border-primary text-primary fs-6 px-3 py-2 shadow-sm">
             الدرجة الحالية: <span class="fw-bold">{{ attempt.final_score|default:0|floatformat:1 }}/{{exam.total_marks}}</span>
         </div>
     </div>
@@ -51,7 +51,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold text-primary">إجابة الطالب:</label>
                         {% if answer.question.question_type in 'short_answer,essay,fill_blank' %}
-                        <div class="p-3 rounded border bg-white"
+                        <div class="p-3 rounded border bg-body-tertiary"
                             style="min-height:60px;white-space:pre-wrap;color:var(--text-main);font-weight:500;">
                             {{ answer.decrypted_text|default:"(لم يجب)" }}
                         </div>
@@ -116,7 +116,7 @@
                 <div class="panel-body">
                     <div class="mb-3">
                         <div class="text-muted small mb-1">الطالب</div>
-                        <div class="fw-bold">{{ attempt.student.get_full_name }}</div>
+                        <div class="fw-bold">{{ attempt.get_student_display_name }}</div>
                         <div class="text-muted small">{{ attempt.student.username }}</div>
                     </div>
                     <div class="mb-3">
@@ -149,9 +149,26 @@
                             {% for snapshot in attempt.snapshots.all %}
                             <div class="col-4">
                                 <a href="{{ snapshot.image.url }}" target="_blank">
-                                    <img src="{{ snapshot.image.url }}" class="img-fluid rounded border bg-light shadow-sm" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                    <img src="{{ snapshot.image.url }}" class="img-fluid rounded border bg-body-secondary shadow-sm" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                 </a>
                                 <div class="x-small text-muted text-center mt-1" style="font-size: 10px;">{{ snapshot.timestamp|date:"H:i" }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if attempt.grade_audit_logs.exists %}
+                    <div class="mb-3 border-top pt-3 mt-3">
+                        <div class="text-muted small mb-2"><i class="bi bi-clock-history me-1"></i>سجل التعديلات (Audit Log)</div>
+                        <div class="overflow-auto" style="max-height: 200px; font-size: 0.85rem;">
+                            {% for log in attempt.grade_audit_logs.all|dictsortreversed:"timestamp" %}
+                            <div class="mb-2 pb-2 border-bottom">
+                                <strong>{{ log.modified_by.get_full_name|default:log.modified_by.username }}</strong>
+                                عدل درجة سؤال ({{ log.question.question_type }})
+                                <br>
+                                من <span class="text-danger fw-bold">{{ log.old_mark }}</span> 
+                                إلى <span class="text-success fw-bold">{{ log.new_mark }}</span>
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ log.timestamp|date:"Y/m/d H:i" }}</div>
                             </div>
                             {% endfor %}
                         </div>

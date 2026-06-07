@@ -232,7 +232,7 @@ function loadNotifications() {
             } else {
                 list.innerHTML = data.notifications.map(n => {
                     const icons = {new_exam:'📋',result_ready:'✅',exam_reminder:'⏰',grading_done:'📝'};
-                    return `<a href="${n.link||'#'}" class="dropdown-item d-flex gap-2 py-2 px-3 ${!n.is_read?'bg-light':''} text-wrap" style="font-size:0.85rem">
+                    return `<a href="${n.link||'#'}" class="dropdown-item d-flex gap-2 py-2 px-3 ${!n.is_read?'bg-body-secondary':''} text-wrap" style="font-size:0.85rem">
                         <span>${icons[n.type]||'🔔'}</span>
                         <div>
                             <div class="fw-bold">${n.title}</div>
@@ -262,12 +262,14 @@ const body = document.body;
 
 function enableDarkMode() {
     body.classList.add('dark-mode');
+    body.setAttribute('data-bs-theme', 'dark');
     darkModeIcon?.classList.replace('bi-moon-fill', 'bi-sun-fill');
     localStorage.setItem('darkMode', 'enabled');
 }
 
 function disableDarkMode() {
     body.classList.remove('dark-mode');
+    body.setAttribute('data-bs-theme', 'light');
     darkModeIcon?.classList.replace('bi-sun-fill', 'bi-moon-fill');
     localStorage.setItem('darkMode', 'disabled');
 }

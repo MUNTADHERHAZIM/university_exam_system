@@ -224,6 +224,7 @@ def exam_edit(request, pk):
         exam.is_mock = request.POST.get('is_mock') == 'on'
         exam.require_seb = request.POST.get('require_seb') == 'on'
         exam.require_camera = request.POST.get('require_camera') == 'on'
+        exam.blind_grading = request.POST.get('blind_grading') == 'on'
         
         # Advanced Features
         random_count = request.POST.get('random_question_count')
@@ -329,7 +330,8 @@ def api_live_monitor(request, pk):
     for attempt in active_attempts:
         override = exam.student_overrides.filter(student=attempt.student).first()
         extra_time = override.extra_time_minutes if override else 0
-        total_time_seconds = (exam.duration + extra_time) * 60
+        medical_extra_time = int(exam.duration * (attempt.student.profile.extra_time_percentage / 100.0))
+        total_time_seconds = (exam.duration + extra_time + medical_extra_time) * 60
         elapsed = (now - attempt.started_at).total_seconds()
         
         if attempt.is_submitted:
@@ -576,6 +578,8 @@ def question_add(request, exam_pk):
             image=request.FILES.get('image'),
         )
         _save_question_components(question, request)
+        from django.core.cache import cache
+        cache.delete(f'exam_{exam_pk}_all_questions')
         messages.success(request, 'تمت إضافة السؤال بنجاح')
         return redirect('exam_edit', pk=exam_pk)
 
@@ -601,6 +605,8 @@ def question_edit(request, pk):
         question.save()
         
         _save_question_components(question, request)
+        from django.core.cache import cache
+        cache.delete(f'exam_{exam.pk}_all_questions')
         messages.success(request, 'تم تحديث السؤال بنجاح')
         return redirect('exam_edit', pk=exam.pk)
 
@@ -617,6 +623,8 @@ def question_delete(request, pk):
     exam_pk = question.exam_id
     if request.method == 'POST':
         question.delete()
+        from django.core.cache import cache
+        cache.delete(f'exam_{exam_pk}_all_questions')
         messages.success(request, 'تم حذف السؤال')
     return redirect('exam_edit', pk=exam_pk)
 
@@ -717,7 +725,12 @@ def exam_take(request, pk):
     if assigned_q_ids:
         questions = list(Question.objects.filter(id__in=assigned_q_ids).prefetch_related('options', 'blanks', 'pairs', 'order_items'))
     else:
-        questions = list(exam.questions.prefetch_related('options', 'blanks', 'pairs', 'order_items'))
+        from django.core.cache import cache
+        cache_key = f'exam_{exam.id}_all_questions'
+        questions = cache.get(cache_key)
+        if not questions:
+            questions = list(exam.questions.prefetch_related('options', 'blanks', 'pairs', 'order_items'))
+            cache.set(cache_key, questions, 300) # Cache for 5 minutes
 
     if exam.shuffle_questions:
         random.shuffle(questions)
@@ -737,10 +750,11 @@ def exam_take(request, pk):
     # Get existing answers
     existing_answers = {a.question_id: a for a in attempt.answers.all()}
 
-    # Time remaining with overrides
+    # Time remaining with overrides and medical extra time
     override = exam.student_overrides.filter(student=request.user).first()
     extra_time = override.extra_time_minutes if override else 0
-    total_time_seconds = (exam.duration + extra_time) * 60
+    medical_extra_time = int(exam.duration * (request.user.profile.extra_time_percentage / 100.0))
+    total_time_seconds = (exam.duration + extra_time + medical_extra_time) * 60
 
     elapsed = (timezone.now() - attempt.started_at).total_seconds()
     time_remaining = max(0, int(total_time_seconds - elapsed))
@@ -980,6 +994,17 @@ def grade_attempt(request, pk):
                 try:
                     earned = float(request.POST[key_marks])
                     earned = max(0.0, min(earned, float(answer.question.marks)))
+                    
+                    if answer.earned_marks != earned:
+                        from .models import GradeAuditLog
+                        GradeAuditLog.objects.create(
+                            attempt=attempt,
+                            question=answer.question,
+                            old_mark=answer.earned_marks,
+                            new_mark=earned,
+                            modified_by=request.user
+                        )
+
                     answer.earned_marks = earned
                     answer.grader_comment = request.POST.get(key_comment, '').strip()
                     answer.is_graded = True
@@ -1037,8 +1062,12 @@ def monitoring(request):
 
     # Annotate with time remaining
     for a in active_attempts:
+        override = a.exam.student_overrides.filter(student=a.student).first()
+        extra_time = override.extra_time_minutes if override else 0
+        medical_extra_time = int(a.exam.duration * (a.student.profile.extra_time_percentage / 100.0))
+        total_time_seconds = (a.exam.duration + extra_time + medical_extra_time) * 60
         elapsed = (timezone.now() - a.started_at).total_seconds()
-        a.time_remaining = max(0, int(a.exam.duration * 60 - elapsed))
+        a.time_remaining = max(0, int(total_time_seconds - elapsed))
         a.progress = min(100, int((a.answers.count() / max(1, a.exam.questions.count())) * 100))
 
     context = {
@@ -1078,8 +1107,12 @@ def monitoring_data_api(request):
 
     data = []
     for a in active:
+        override = a.exam.student_overrides.filter(student=a.student).first()
+        extra_time = override.extra_time_minutes if override else 0
+        medical_extra_time = int(a.exam.duration * (a.student.profile.extra_time_percentage / 100.0))
+        total_time_seconds = (a.exam.duration + extra_time + medical_extra_time) * 60
         elapsed = (timezone.now() - a.started_at).total_seconds()
-        time_rem = max(0, int(a.exam.duration * 60 - elapsed))
+        time_rem = max(0, int(total_time_seconds - elapsed))
         data.append({
             'id': a.id,
             'student': a.student.get_full_name(),

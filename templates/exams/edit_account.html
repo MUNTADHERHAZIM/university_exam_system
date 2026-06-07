@@ -25,33 +25,33 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">الاسم الأول</label>
-                                <input type="text" name="first_name" class="form-control bg-light border-0" value="{{ edit_user.first_name }}" required>
+                                <input type="text" name="first_name" class="form-control bg-body-secondary border-0" value="{{ edit_user.first_name }}" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">اسم العائلة</label>
-                                <input type="text" name="last_name" class="form-control bg-light border-0" value="{{ edit_user.last_name }}">
+                                <input type="text" name="last_name" class="form-control bg-body-secondary border-0" value="{{ edit_user.last_name }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">البريد الإلكتروني</label>
-                                <input type="email" name="email" class="form-control bg-light border-0" value="{{ edit_user.email|default:'' }}">
+                                <input type="email" name="email" class="form-control bg-body-secondary border-0" value="{{ edit_user.email|default:'' }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">رقم الهاتف</label>
-                                <input type="text" name="phone" class="form-control bg-light border-0" value="{{ edit_user.profile.phone|default:'' }}">
+                                <input type="text" name="phone" class="form-control bg-body-secondary border-0" value="{{ edit_user.profile.phone|default:'' }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">اسم المستخدم (تحرير مقفل)</label>
-                                <input type="text" class="form-control bg-light border-0 text-muted" value="{{ edit_user.username }}" disabled>
+                                <input type="text" class="form-control bg-body-secondary border-0 text-muted" value="{{ edit_user.username }}" disabled>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">الدور الحالي (نشط)</label>
-                                <input type="text" class="form-control bg-light border-0 text-muted" value="{{ edit_user.profile.get_role_display_safe }}" disabled>
+                                <input type="text" class="form-control bg-body-secondary border-0 text-muted" value="{{ edit_user.profile.get_role_display_safe }}" disabled>
                             </div>
                             
                             {% if request.user.profile.role == 'admin' %}
                             <div class="col-12 mt-3">
                                 <label class="form-label mb-2" style="font-weight: 600;">الصلاحيات المسموحة لهذا الحساب</label>
-                                <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded-3 border-0">
+                                <div class="d-flex flex-wrap gap-3 p-3 bg-body-secondary rounded-3 border-0">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="allowed_roles" value="student" id="role_student" {% if 'student' in edit_user.profile.get_allowed_roles_list %}checked{% endif %}>
                                         <label class="form-check-label" for="role_student">طالب</label>
@@ -77,7 +77,7 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">الكلية</label>
-                                <select name="college" id="id_college" class="form-select bg-light border-0">
+                                <select name="college" id="id_college" class="form-select bg-body-secondary border-0">
                                     <option value="">-- اختر الكلية --</option>
                                     {% for col in colleges %}
                                     <option value="{{ col.id }}" {% if edit_user.profile.college_id == col.id %}selected{% endif %}>{{ col.name }}</option>
@@ -86,7 +86,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">القسم المتخصص</label>
-                                <select name="department" id="id_department" class="form-select bg-light border-0">
+                                <select name="department" id="id_department" class="form-select bg-body-secondary border-0">
                                     <option value="">-- اختر القسم --</option>
                                     {% for dept in departments %}
                                     <option value="{{ dept.id }}" {% if edit_user.profile.academic_department_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
@@ -97,11 +97,11 @@
                             {% if 'student' in edit_user.profile.get_allowed_roles_list %}
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">الرقم الجامعي</label>
-                                <input type="text" name="student_id" class="form-control bg-light border-0" value="{{ edit_user.profile.student_id|default:'' }}">
+                                <input type="text" name="student_id" class="form-control bg-body-secondary border-0" value="{{ edit_user.profile.student_id|default:'' }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" style="font-weight: 600;">المستوى الدراسي</label>
-                                <select name="level" class="form-select bg-light border-0">
+                                <select name="level" class="form-select bg-body-secondary border-0">
                                     <option value="1" {% if edit_user.profile.level == 1 %}selected{% endif %}>المستوى الأول</option>
                                     <option value="2" {% if edit_user.profile.level == 2 %}selected{% endif %}>المستوى الثاني</option>
                                     <option value="3" {% if edit_user.profile.level == 3 %}selected{% endif %}>المستوى الثالث</option>
@@ -155,13 +155,13 @@
     // Make inputs look stylish on focus
     document.querySelectorAll('.form-control, .form-select').forEach(element => {
         element.addEventListener('focus', function() {
-            this.classList.remove('bg-light');
-            this.classList.add('bg-white');
+            this.classList.remove('bg-body-secondary');
+            this.classList.add('bg-body-tertiary');
             this.style.boxShadow = '0 0 0 0.25rem rgba(13, 110, 253, 0.1)';
         });
         element.addEventListener('blur', function() {
-            this.classList.add('bg-light');
-            this.classList.remove('bg-white');
+            this.classList.add('bg-body-secondary');
+            this.classList.remove('bg-body-tertiary');
             this.style.boxShadow = 'none';
         });
     });

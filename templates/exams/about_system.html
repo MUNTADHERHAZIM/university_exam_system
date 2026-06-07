@@ -8,7 +8,7 @@
         --premium-primary-light: #eff6ff;
         --premium-secondary: #0f172a;
         --premium-accent: #d97706;
-        --glass-bg-light: rgba(255, 255, 255, 0.85);
+        --glass-bg-body-secondary: rgba(255, 255, 255, 0.85);
         --glass-border-light: rgba(255, 255, 255, 0.9);
         --text-main: #1e293b;
         --text-muted: #64748b;
@@ -27,7 +27,7 @@
 
     /* Premium Glass Container */
     .premium-glass-light {
-        background: var(--glass-bg-light);
+        background: var(--glass-bg-body-secondary);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border: 1px solid var(--glass-border-light);
@@ -287,6 +287,33 @@
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
     }
+
+    /* Dark Mode Overrides for About System */
+    body.dark-mode .feature-box,
+    body.dark-mode .premium-accordion .accordion-button,
+    body.dark-mode .contact-glass {
+        background: #1e293b !important;
+        border-color: rgba(71, 85, 105, 0.8) !important;
+        color: #f8fafc !important;
+    }
+    body.dark-mode .premium-accordion .accordion-body {
+        background: #0f172a !important;
+        border-color: rgba(71, 85, 105, 0.8) !important;
+        color: #94a3b8 !important;
+    }
+    body.dark-mode .social-btn-premium {
+        background: #1e293b !important;
+        border-color: rgba(71, 85, 105, 0.8) !important;
+        color: #f8fafc !important;
+    }
+    body.dark-mode .feature-box::before {
+        background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(30, 41, 59, 0.8) 100%) !important;
+    }
+    body.dark-mode .premium-accordion .accordion-button:not(.collapsed) {
+        background: #334155 !important;
+        color: #60a5fa !important;
+    }
+
 </style>
 {% endblock %}
 

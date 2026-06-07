@@ -103,7 +103,7 @@
                     </table>
                 </div>
             </div>
-            <div class="modal-footer border-0 p-3 bg-light">
+            <div class="modal-footer border-0 p-3 bg-body-secondary">
                 <small class="text-muted"><i class="bi bi-info-circle me-1"></i>يتم تحديث الإجابات تلقائياً كل 10 ثوانٍ من جهاز الطالب.</small>
                 <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">إغلاق</button>
             </div>
@@ -123,7 +123,7 @@
                 <div id="monitorChatBody" class="flex-grow-1 p-4 overflow-auto" style="background:#f8fafc; display:flex; flex-direction:column; gap:12px;">
                     <!-- Messages -->
                 </div>
-                <div class="p-3 border-top bg-white d-flex gap-2 align-items-center">
+                <div class="p-3 border-top bg-body-tertiary d-flex gap-2 align-items-center">
                     <input type="text" id="monitorChatInput" class="form-control rounded-pill px-3 border-light-subtle" placeholder="اكتب ردك هنا..." onkeypress="if(event.key==='Enter') sendMonitorChat()" style="background: #f1f5f9; border: none; font-size: 0.9rem; padding: 10px 18px;">
                     <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" onclick="sendMonitorChat()" style="width: 44px; height: 44px; background: #6366f1; border: none;"><i class="bi bi-send-fill"></i></button>
                 </div>
@@ -238,7 +238,7 @@ async function fetchLiveAnswers() {
         body.innerHTML = data.questions.map(q => `
             <tr>
                 <td><div class="small fw-bold">${q.text}</div></td>
-                <td><span class="badge bg-light text-dark border">${q.type}</span></td>
+                <td><span class="badge bg-body-secondary text-body-emphasis border">${q.type}</span></td>
                 <td>
                     <div class="live-ans-text ${q.is_answered ? 'text-primary' : 'text-muted italic'}">
                         ${q.answer}

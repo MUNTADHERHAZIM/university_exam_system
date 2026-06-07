@@ -67,7 +67,7 @@
                 <tr>
                     {% if user.profile.role == 'admin' %}
                     <td>
-                        <div class="fw-bold">{{ attempt.student.get_full_name }}</div>
+                        <div class="fw-bold">{{ attempt.get_student_display_name }}</div>
                         <div class="text-muted small">{{ attempt.student.username }}</div>
                     </td>
                     {% endif %}
@@ -113,7 +113,7 @@
                             <a href="{% url 'exam_result' attempt.pk %}" class="btn btn-sm btn-ghost" title="عرض"><i
                                     class="bi bi-eye"></i></a>
                             {% if not attempt.is_fully_graded %}
-                            <a href="{% url 'grade_attempt' attempt.pk %}" class="btn btn-sm btn-warning text-dark"
+                            <a href="{% url 'grade_attempt' attempt.pk %}" class="btn btn-sm btn-warning text-body-emphasis"
                                 title="تصحيح">
                                 <i class="bi bi-pencil-fill"></i>
                             </a>

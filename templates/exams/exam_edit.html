@@ -5,7 +5,7 @@
     .shadow-inner { box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05); }
     .transition-all { transition: all 0.3s ease; }
     .hover-up:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg) !important; }
-    .question-item:hover { background: #fdfdfd; transform: scale(1.002); }
+    .question-item:hover {  transform: scale(1.002); }
     .x-small { font-size: 0.75rem; }
     .shadow-sm { box-shadow: 0 .125rem .25rem rgba(224, 206, 206, 0.075)!important; }
 </style>
@@ -13,7 +13,7 @@
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center mb-5">
     <div>
-        <h1 class="fw-black text-dark mb-1" style="font-size: 2.2rem; letter-spacing: -1px;">{{ exam.title }}</h1>
+        <h1 class="fw-black text-body-emphasis mb-1" style="font-size: 2.2rem; letter-spacing: -1px;">{{ exam.title }}</h1>
         <div class="d-flex align-items-center gap-2 text-muted x-small">
             <span>{{ exam.subject }}</span>
             <span class="opacity-25">•</span>
@@ -55,7 +55,7 @@
                         <!-- Section 1: Basic Info -->
                         <div class="accordion-item border-0">
                             <h2 class="accordion-header">
-                                <button class="accordion-button bg-light fw-bold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#secBasic">
+                                <button class="accordion-button bg-body-secondary fw-bold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#secBasic">
                                     <i class="bi bi-info-circle me-2 text-primary"></i> البيانات الأساسية
                                 </button>
                             </h2>
@@ -94,7 +94,7 @@
                         <!-- Section 2: Timing & Grades -->
                         <div class="accordion-item border-0">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-light fw-bold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#secTiming">
+                                <button class="accordion-button collapsed bg-body-secondary fw-bold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#secTiming">
                                     <i class="bi bi-clock-history me-2 text-success"></i> الوقت والجدولة
                                 </button>
                             </h2>
@@ -167,7 +167,7 @@
                         <!-- Section 3: Advanced Options -->
                         <div class="accordion-item border-0">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-light fw-bold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#secOptions">
+                                <button class="accordion-button collapsed bg-body-secondary fw-bold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#secOptions">
                                     <i class="bi bi-toggle-on me-2 text-warning"></i> خيارات والطلاب
                                 </button>
                             </h2>
@@ -195,6 +195,10 @@
                                     <div class="form-check form-switch mb-3">
                                         <input class="form-check-input" type="checkbox" name="require_camera" id="require_camera" {% if exam.require_camera %}checked{% endif %}>
                                         <label class="form-check-label small fw-bold text-danger" for="require_camera">التحقق بالكاميرا</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" name="blind_grading" id="blind_grading" {% if exam.blind_grading %}checked{% endif %}>
+                                        <label class="form-check-label small fw-bold text-success" for="blind_grading">تفعيل التصحيح الأعمى (إخفاء أسماء الطلاب)</label>
                                     </div>
                                     
                                     
@@ -274,7 +278,7 @@
                         </div>
                     </div>
 
-                    <div class="p-4 bg-light border-top">
+                    <div class="p-4 bg-body-secondary border-top">
                         <button type="submit" class="btn btn-dark w-100 py-3 fw-bold rounded-3 shadow-sm hover-up">
                             <i class="bi bi-cloud-arrow-up-fill me-2"></i> حفظ كافـة الإعدادات
                         </button>
@@ -310,13 +314,13 @@
     <!-- Main Content: Questions List -->
     <div class="col-xxl-9 col-lg-8">
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+            <div class="card-header bg-body-tertiary p-4 border-bottom d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3">
                     <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:48px; height:48px;">
                         <i class="bi bi-list-task fs-4"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold mb-0 text-dark">قائمة الأسئلة</h5>
+                        <h5 class="fw-bold mb-0 text-body-emphasis">قائمة الأسئلة</h5>
                         <p class="text-muted small mb-0">{{ questions|length }} سؤال مُسجل حالياً</p>
                     </div>
                 </div>
@@ -348,18 +352,18 @@
                                 <span class="badge {% if q.question_type in 'mcq_single,mcq_multi' %}bg-primary{% elif q.question_type == 'essay' %}bg-warning{% else %}bg-info{% endif %} bg-opacity-10 {% if q.question_type in 'mcq_single,mcq_multi' %}text-primary{% elif q.question_type == 'essay' %}text-warning{% else %}text-info{% endif %} border-0 px-3 py-2 rounded-pill small">
                                     <i class="bi bi-tag-fill me-1"></i> {{ q.get_question_type_display }}
                                 </span>
-                                <span class="badge bg-light text-dark border-0 px-3 py-2 rounded-pill small">
+                                <span class="badge bg-body-secondary text-body-emphasis border-0 px-3 py-2 rounded-pill small">
                                     <i class="bi bi-award-fill me-1 text-gold"></i> {{ q.marks }} درجة
                                 </span>
                             </div>
                             
-                            <h6 class="fw-bold mb-3 text-dark lh-base" style="font-size: 1.1rem;">{{ q.text|safe }}</h6>
+                            <h6 class="fw-bold mb-3 text-body-emphasis lh-base" style="font-size: 1.1rem;">{{ q.text|safe }}</h6>
                             
                             {% if q.question_type in 'mcq_single,mcq_multi' %}
                             <div class="row g-2">
                                 {% for opt in q.options.all %}
                                 <div class="col-md-6">
-                                    <div class="p-2 px-3 rounded-3 border bg-light d-flex align-items-center gap-2 {% if opt.is_correct %}border-success bg-success bg-opacity-10 text-success{% endif %}" style="font-size: 0.9rem;">
+                                    <div class="p-2 px-3 rounded-3 border bg-body-secondary d-flex align-items-center gap-2 {% if opt.is_correct %}border-success bg-success bg-opacity-10 text-success{% endif %}" style="font-size: 0.9rem;">
                                         {% if opt.is_correct %}<i class="bi bi-check-circle-fill"></i>{% else %}<i class="bi bi-circle"></i>{% endif %}
                                         <span>{{ opt.text|safe }}</span>
                                     </div>
@@ -436,7 +440,7 @@
                         <input type="file" name="file" class="form-control" accept=".xlsx, .docx" required>
                     </div>
                 </div>
-                <div class="modal-footer p-3 border-top bg-light">
+                <div class="modal-footer p-3 border-top bg-body-secondary">
                     <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">إلغاء</button>
                     <button type="submit" class="btn btn-primary px-4 fw-bold">بدء الاستيراد الآن</button>
                 </div>

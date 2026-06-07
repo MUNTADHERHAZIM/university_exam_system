@@ -45,16 +45,10 @@ body.dark-mode .card,
 body.dark-mode .modal-content,
 body.dark-mode .list-item:hover,
 body.dark-mode .question-item:hover {
-    background-color: var(--surface-solid) !important;
+    background-color: rgba(14, 165, 233, 0.15) !important; /* Sky Blue Hover */
 }
 
-body.dark-mode input,
-body.dark-mode select,
-body.dark-mode textarea {
-    background-color: #0f172a !important;
-    color: #f8fafc !important;
-    border-color: var(--border) !important;
-}
+
 
 * {
     box-sizing: border-box;
@@ -966,8 +960,13 @@ textarea.form-control {
     font-weight: 500;
 }
 
+/* Professional Table Hover */
 .table-hover>tbody>tr:hover>* {
-    background: #f8fafc;
+    background-color: var(--background) !important;
+}
+body.dark-mode .table-hover>tbody>tr:hover>*,
+[data-bs-theme="dark"] .table-hover>tbody>tr:hover>* {
+    background-color: rgba(14, 165, 233, 0.15) !important; /* Sky Blue Hover */
 }
 
 /* ── Live badge ── */
@@ -1389,3 +1388,65 @@ textarea.form-control {
 .type-essay { border-right-color: #ea580c !important; }
 .type-code { border-right-color: #d97706 !important; }
 .type-true_false { border-right-color: #16a34a !important; }
+/* ── Professional Form Controls ── */
+.form-control, .form-select {
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    border-color: var(--border);
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+    border-color: var(--primary);
+}
+
+/* Dark Mode Form Controls */
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select,
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: rgba(71, 85, 105, 0.8) !important;
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus,
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+    background-color: #0f172a !important;
+    border-color: var(--primary-light) !important;
+    box-shadow: 0 0 0 0.25rem rgba(129, 140, 248, 0.25) !important;
+}
+
+/* FIX NATIVE SELECT OPTIONS BACKGROUND */
+body.dark-mode option,
+[data-bs-theme="dark"] option {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+/* Tom Select Dark Mode Fixes */
+body.dark-mode .ts-control,
+body.dark-mode .ts-dropdown {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: rgba(71, 85, 105, 0.8) !important;
+}
+body.dark-mode .ts-dropdown .option {
+    color: #f8fafc;
+}
+body.dark-mode .ts-dropdown .option:hover,
+body.dark-mode .ts-dropdown .active {
+    background-color: #334155 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .ts-control input {
+    color: #f8fafc !important;
+}

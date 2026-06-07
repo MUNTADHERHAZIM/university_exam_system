@@ -76,7 +76,7 @@
                     <div class="small fw-bold mb-2">نتائج محاولاتك السابقة:</div>
                     {% for a in my_attempts %}
                         {% if a.exam_id == exam.pk %}
-                        <div class="d-flex align-items-center justify-content-between p-2 border rounded mb-2 bg-light">
+                        <div class="d-flex align-items-center justify-content-between p-2 border rounded mb-2 bg-body-secondary">
                             <div class="small">
                                 <i class="bi bi-calendar-check me-1"></i>{{ a.submitted_at|date:"Y/m/d" }}
                             </div>

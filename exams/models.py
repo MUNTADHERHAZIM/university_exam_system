@@ -263,6 +263,11 @@ class ExamAttempt(models.Model):
     def __str__(self):
         return f"{self.student.get_full_name()} - {self.exam.title}"
 
+    def get_student_display_name(self):
+        if self.exam.blind_grading and not self.is_fully_graded:
+            return f"طالب سري #{self.id}"
+        return self.student.get_full_name() or self.student.username
+
     def get_total_score(self):
         if self.final_score is not None:
             return self.final_score

@@ -105,7 +105,7 @@
                         </span>
                         <span class="text-muted small">{{ attempt.final_score|default:0|floatformat:0 }}/{{ attempt.exam.total_marks }}</span>
                         {% if not attempt.is_fully_graded %}
-                        <a href="{% url 'grade_attempt' attempt.pk %}" class="btn btn-sm btn-warning text-dark">تصحيح</a>
+                        <a href="{% url 'grade_attempt' attempt.pk %}" class="btn btn-sm btn-warning text-body-emphasis">تصحيح</a>
                         {% endif %}
                     </div>
                 </div>
@@ -129,7 +129,7 @@
     <div class="panel-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
+                <thead class="bg-body-secondary">
                     <tr>
                         <th class="ps-4">المرسل</th>
                         <th>الموضوع</th>
