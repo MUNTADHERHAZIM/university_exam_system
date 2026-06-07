@@ -1,0 +1,184 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Modern Minimalist Login Page */
+    body.login {
+        background: var(--bg-sub) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #container {
+        background: transparent !important;
+        width: 100% !important;
+        max-width: 400px !important;
+        margin: 0 24px !important;
+    }
+
+    #header, .breadcrumbs {
+        display: none !important;
+    }
+
+    #content {
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Minimalist Login Card */
+    .login #content-main {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    #content-main form {
+        background: var(--bg-main) !important;
+        border-radius: 12px !important;
+        padding: 40px !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        border: 1px solid var(--border) !important;
+    }
+
+    [data-theme="dark"] #content-main form {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .login .form-row {
+        padding: 12px 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .login .form-row label {
+        display: block !important;
+        float: none !important;
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        text-align: right !important;
+        color: var(--fg-main) !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+    }
+
+    .login .form-row input {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 42px !important;
+        border-radius: 6px !important;
+    }
+
+    .login .submit-row {
+        padding: 24px 0 0 !important;
+        background: transparent !important;
+        border: none !important;
+        text-align: center !important;
+    }
+
+    .login .submit-row input {
+        width: 100% !important;
+        min-height: 44px !important;
+        font-size: 14px !important;
+        border-radius: 8px !important;
+    }
+
+    #site-name-login {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    #site-name-login h1 {
+        font-weight: 800;
+        font-size: 24px;
+        color: var(--fg-main);
+        margin: 0;
+    }
+
+    #site-name-login p {
+        color: var(--fg-muted);
+        font-size: 14px;
+        margin-top: 4px;
+    }
+
+    .errornote {
+        background: #fef2f2 !important;
+        color: #b91c1c !important;
+        border: 1px solid #fee2e2 !important;
+        border-radius: 8px !important;
+        padding: 12px !important;
+        text-align: center !important;
+        margin-bottom: 24px !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+    }
+
+    [data-theme="dark"] .errornote {
+        background: rgba(220, 38, 38, 0.1) !important;
+        border-color: rgba(220, 38, 38, 0.2) !important;
+        color: #ef4444 !important;
+    }
+
+    .password-reset-link {
+        text-align: left;
+        margin-top: 16px;
+    }
+
+    .password-reset-link a {
+        font-size: 13px;
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .password-reset-link a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="site-name-login">
+    <h1>🎓 دخول الإدارة</h1>
+    <p>نظام الاختبارات الجامعي المتطور</p>
+</div>
+
+<div id="content-main">
+    {% if form.errors and not form.non_field_errors %}
+    <p class="errornote">
+        {% translate "Please correct the errors below." %}
+    </p>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+    <p class="errornote">
+        {{ error }}
+    </p>
+    {% endfor %}
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+      <div class="form-row">
+        {{ form.username.label_tag }} {{ form.username }}
+      </div>
+      <div class="form-row">
+        {{ form.password.label_tag }} {{ form.password }}
+        <input type="hidden" name="next" value="{{ next }}">
+      </div>
+      <div class="submit-row">
+        <input type="submit" value="{% translate 'Log in' %}">
+      </div>
+      {% url 'admin_password_reset' as password_reset_url %}
+      {% if password_reset_url %}
+      <div class="password-reset-link">
+        <a href="{{ password_reset_url }}">{% translate 'Forgotten your password or username?' %}</a>
+      </div>
+      {% endif %}
+    </form>
+</div>
+{% endblock %}

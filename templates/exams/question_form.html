@@ -1,3 +1,4 @@
+{% extends "base.html" %}
 {% block title %}{% if question %}تعديل سؤال{% else %}إضافة سؤال{% endif %} - {{ exam.title }}{% endblock %}
 {% block content %}
 <div class="page-header mb-4">
@@ -16,7 +17,7 @@
     <div class="col-lg-10">
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-body p-4 p-md-5">
-                <form method="post" id="questionForm">
+                <form method="post" id="questionForm" enctype="multipart/form-data">
                     {% csrf_token %}
 
                     <!-- Question type selector -->
@@ -47,10 +48,24 @@
                         <input type="hidden" name="question_type" id="selectedType" value="{% if question %}{{ question.question_type }}{% else %}mcq_single{% endif %}">
                     </div>
 
-                    <!-- Question text -->
                     <div class="mb-4">
                         <label class="form-label fw-bold text-dark">نص السؤال <span class="text-danger">*</span></label>
-                        <textarea name="text" class="form-control rounded-3" rows="4" placeholder="أدخل نص السؤال هنا..." required>{{ question.text|default:'' }}</textarea>
+                        <textarea name="text" id="questionTextArea" class="form-control rounded-3" rows="6" placeholder="أدخل نص السؤال هنا...">{{ question.text|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">صورة توضيحية (اختياري)</label>
+                        <input type="file" name="image" class="form-control" accept="image/*">
+                        {% if question.image %}
+                        <div class="mt-2 text-muted small">
+                            الصورة الحالية: <a href="{{ question.image.url }}" target="_blank">عرض الصورة</a>
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" name="clear_image" value="1" id="clearImage">
+                                <label class="form-check-label text-danger" for="clearImage">حذف الصورة الحالية</label>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
 
                     <div class="row g-4 mb-5">
@@ -147,7 +162,7 @@
                             <h6 class="fw-bold mb-4">حدد الإجابة الصحيحة</h6>
                             <div class="d-flex gap-4">
                                 <label class="tf-option flex-grow-1">
-                                    <input type="radio" name="tf_answer" value="true" required {% if question.tf_answer %}checked{% endif %}>
+                                    <input type="radio" name="tf_answer" value="true" {% if question.tf_answer %}checked{% endif %}>
                                     <div class="tf-card correct-card rounded-4 p-4 text-center border-2 transition-all">
                                         <span class="tf-icon d-block mb-2 fs-3">✓</span>
                                         <span class="tf-label fw-bold text-uppercase">صحيح (True)</span>
@@ -331,10 +346,129 @@
         </div>
     </div>
 </div>
+
+<!-- Math Editor Modal -->
+<div class="modal fade" id="mathModal" tabindex="-1" aria-labelledby="mathModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header bg-light border-bottom-0 rounded-top-4">
+        <h5 class="modal-title fw-bold text-primary" id="mathModalLabel"><i class="bi bi-calculator me-2"></i>محرر المعادلات الرياضية</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4" dir="ltr">
+        <div class="alert alert-info small text-end" dir="rtl"><i class="bi bi-info-circle me-1"></i>استخدم لوحة المفاتيح الافتراضية لكتابة المعادلة بكل سهولة.</div>
+        <math-field id="mathField" style="width: 100%; font-size: 28px; padding: 15px; border: 2px solid var(--border); border-radius: 12px; min-height: 80px; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);"></math-field>
+      </div>
+      <div class="modal-footer border-top-0 bg-light rounded-bottom-4">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-primary px-5 fw-bold" id="insertMathBtn"><i class="bi bi-plus-circle me-2"></i>إدراج المعادلة</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
+<style>
+/* إخفاء القوائم المنسدلة لـ TinyMCE عندما تكون النوافذ المنبثقة (Modal) مفتوحة */
+body.modal-open .tox-tinymce-aux {
+    display: none !important;
+}
+/* رفع مستوى ظهور لوحة مفاتيح الرياضيات الافتراضية فوق كل شيء */
+body {
+    --keyboard-zindex: 2000 !important;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
+<script defer src="https://unpkg.com/mathlive"></script>
 <script>
+tinymce.init({
+    selector: '#questionTextArea',
+    directionality: 'rtl',
+    height: 400,
+    menubar: 'file edit view insert format tools table help',
+    plugins: [
+        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+        'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons'
+    ],
+    toolbar: 'undo redo | fontfamily fontsize | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | insertMath | link image media table emoticons charmap | removeformat | help',
+    font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
+    content_style: 'body { font-family: Tajawal, Arial, sans-serif; font-size: 16px; direction: rtl; }',
+    setup: function(editor) {
+        editor.ui.registry.addButton('insertMath', {
+            text: '∑ إضافة معادلة رياضة',
+            tooltip: 'محرر المعادلات الرياضية المرئي',
+            onAction: function() {
+                window.currentMathImage = null; // Reset for new equation
+                const mathModalEl = document.getElementById('mathModal');
+                const mathModal = new bootstrap.Modal(mathModalEl);
+                document.getElementById('mathField').setValue(''); // clear previous math
+                mathModal.show();
+                
+                // Set a short delay to allow modal to render before focusing the math field
+                setTimeout(() => {
+                    document.getElementById('mathField').focus();
+                }, 500);
+
+                window.currentTinyMCE = editor;
+            }
+        });
+
+        // Allow clicking on existing math images to edit them
+        editor.on('click', function(e) {
+            if (e.target.nodeName === 'IMG' && e.target.classList.contains('math-equation')) {
+                const latex = decodeURIComponent(e.target.getAttribute('data-latex') || '');
+                const mathModalEl = document.getElementById('mathModal');
+                const mathModal = new bootstrap.Modal(mathModalEl);
+                document.getElementById('mathField').setValue(latex);
+                mathModal.show();
+                
+                setTimeout(() => {
+                    document.getElementById('mathField').focus();
+                }, 500);
+
+                window.currentTinyMCE = editor;
+                window.currentMathImage = e.target; // Save reference to update it
+            }
+        });
+    }
+});
+
+// Handle math insertion
+document.getElementById('insertMathBtn').addEventListener('click', function() {
+    const mf = document.getElementById('mathField');
+    let latex = mf.getValue();
+    
+    // Clean up MathLive custom macros to Standard LaTeX for CodeCogs/MathJax compatibility
+    latex = latex.replace(/\\placeholder\{.*?\}/g, '')
+                 .replace(/\\placeholder/g, '')
+                 .replace(/\\exponentialE/g, 'e')
+                 .replace(/\\imaginaryI/g, 'i')
+                 .replace(/\\differentialD/g, 'd');
+    
+    if(latex && window.currentTinyMCE) {
+        // Enlarge slightly for better readability in SVG
+        const encoded = encodeURIComponent('\\Large ' + latex);
+        const imgUrl = "https://latex.codecogs.com/svg.image?" + encoded;
+        
+        if (window.currentMathImage) {
+            // Update existing image
+            window.currentMathImage.src = imgUrl;
+            window.currentMathImage.setAttribute('data-latex', encodeURIComponent(latex));
+            window.currentMathImage = null;
+        } else {
+            // Insert new image
+            const imgHtml = `<img src="${imgUrl}" alt="Math Equation" data-latex="${encodeURIComponent(latex)}" class="math-equation mceNonEditable" style="vertical-align: middle; margin: 0 4px; cursor: pointer; max-width: 100%;" />`;
+            window.currentTinyMCE.insertContent(' ' + imgHtml + ' ');
+        }
+    }
+    const modalEl = document.getElementById('mathModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if(modal) modal.hide();
+});
+
 const TYPES = ['mcq_single','mcq_multi','true_false','fill_blank','short_answer','essay','matching','ordering','code'];
 let mcqSingleCount = {% if question %}{{ question.options.count }}{% else %}3{% endif %};
 let mcqMultiCount = {% if question %}{{ question.options.count }}{% else %}3{% endif %};
@@ -422,6 +556,17 @@ function renumberOrdering() {
 }
 
 document.getElementById('questionForm').addEventListener('submit', function(e) {
+    if (typeof tinymce !== 'undefined') {
+        tinymce.triggerSave();
+    }
+    
+    // منع الحفظ الصامت إذا كان نص السؤال فارغاً
+    if (!document.getElementById('questionTextArea').value.trim()) {
+        e.preventDefault();
+        alert('الرجاء كتابة نص السؤال في المحرر قبل المتابعة.');
+        return false;
+    }
+
     const type = document.getElementById('selectedType').value;
     if(type === 'mcq_single') {
         const checked = document.querySelector('input[name=option_correct_single]:checked');

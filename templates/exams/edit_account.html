@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}تعديل الحساب - {{ edit_user.get_full_name|default:edit_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">تعديل بيانات الحساب</h1>
+        <a href="{% if next_url == 'students_list' %}{% url 'students_list' %}{% elif next_url == 'account_management' %}{% url 'account_management' %}{% elif next_url == 'instructors_list' %}{% url 'instructors_list' %}{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-right"></i> عودة
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card-panel border-0 shadow-sm rounded-4">
+                <div class="card-body p-5">
+                    <h5 class="card-title mb-4 border-bottom pb-2">
+                        <i class="bi bi-person-lines-fill text-primary me-2"></i> المحتويات والتفاصيل
+                    </h5>
+                    
+                    <form method="post" action="{% url 'edit_account' edit_user.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ next_url }}">
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">الاسم الأول</label>
+                                <input type="text" name="first_name" class="form-control bg-light border-0" value="{{ edit_user.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">اسم العائلة</label>
+                                <input type="text" name="last_name" class="form-control bg-light border-0" value="{{ edit_user.last_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">البريد الإلكتروني</label>
+                                <input type="email" name="email" class="form-control bg-light border-0" value="{{ edit_user.email|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">رقم الهاتف</label>
+                                <input type="text" name="phone" class="form-control bg-light border-0" value="{{ edit_user.profile.phone|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">اسم المستخدم (تحرير مقفل)</label>
+                                <input type="text" class="form-control bg-light border-0 text-muted" value="{{ edit_user.username }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">الدور الحالي (نشط)</label>
+                                <input type="text" class="form-control bg-light border-0 text-muted" value="{{ edit_user.profile.get_role_display_safe }}" disabled>
+                            </div>
+                            
+                            {% if request.user.profile.role == 'admin' %}
+                            <div class="col-12 mt-3">
+                                <label class="form-label mb-2" style="font-weight: 600;">الصلاحيات المسموحة لهذا الحساب</label>
+                                <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded-3 border-0">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="allowed_roles" value="student" id="role_student" {% if 'student' in edit_user.profile.get_allowed_roles_list %}checked{% endif %}>
+                                        <label class="form-check-label" for="role_student">طالب</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="allowed_roles" value="assistant" id="role_assistant" {% if 'assistant' in edit_user.profile.get_allowed_roles_list %}checked{% endif %}>
+                                        <label class="form-check-label" for="role_assistant">مراقب / مصحح</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="allowed_roles" value="admin" id="role_admin" {% if 'admin' in edit_user.profile.get_allowed_roles_list %}checked{% endif %}>
+                                        <label class="form-check-label" for="role_admin">أستاذ / منسق</label>
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle"></i> يمكن للمستخدم اختيار أي من هذه الصلاحيات للعمل بها داخل النظام.</small>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <h5 class="card-title mb-3 border-bottom pb-2 mt-4">
+                            <i class="bi bi-building text-primary me-2"></i> التفاصيل الأكاديمية
+                        </h5>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">الكلية</label>
+                                <select name="college" id="id_college" class="form-select bg-light border-0">
+                                    <option value="">-- اختر الكلية --</option>
+                                    {% for col in colleges %}
+                                    <option value="{{ col.id }}" {% if edit_user.profile.college_id == col.id %}selected{% endif %}>{{ col.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">القسم المتخصص</label>
+                                <select name="department" id="id_department" class="form-select bg-light border-0">
+                                    <option value="">-- اختر القسم --</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept.id }}" {% if edit_user.profile.academic_department_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            {% if 'student' in edit_user.profile.get_allowed_roles_list %}
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">الرقم الجامعي</label>
+                                <input type="text" name="student_id" class="form-control bg-light border-0" value="{{ edit_user.profile.student_id|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-weight: 600;">المستوى الدراسي</label>
+                                <select name="level" class="form-select bg-light border-0">
+                                    <option value="1" {% if edit_user.profile.level == 1 %}selected{% endif %}>المستوى الأول</option>
+                                    <option value="2" {% if edit_user.profile.level == 2 %}selected{% endif %}>المستوى الثاني</option>
+                                    <option value="3" {% if edit_user.profile.level == 3 %}selected{% endif %}>المستوى الثالث</option>
+                                    <option value="4" {% if edit_user.profile.level == 4 %}selected{% endif %}>المستوى الرابع</option>
+                                </select>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-5">
+                            <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm">
+                                <i class="bi bi-floppy me-2"></i> حفظ التعديلات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Department filtering based on college selection
+    document.getElementById('id_college').addEventListener('change', function() {
+        const collegeId = this.value;
+        const deptSelect = document.getElementById('id_department');
+        
+        deptSelect.innerHTML = '<option value="">-- تحميل... --</option>';
+        
+        if (collegeId) {
+            fetch(`/api/departments/?college_id=${collegeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    deptSelect.innerHTML = '<option value="">-- اختر القسم --</option>';
+                    data.departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.id;
+                        option.textContent = dept.name;
+                        deptSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching departments:', error);
+                    deptSelect.innerHTML = '<option value="">-- خطأ في التحميل --</option>';
+                });
+        } else {
+            deptSelect.innerHTML = '<option value="">-- اختر القسم --</option>';
+        }
+    });
+
+    // Make inputs look stylish on focus
+    document.querySelectorAll('.form-control, .form-select').forEach(element => {
+        element.addEventListener('focus', function() {
+            this.classList.remove('bg-light');
+            this.classList.add('bg-white');
+            this.style.boxShadow = '0 0 0 0.25rem rgba(13, 110, 253, 0.1)';
+        });
+        element.addEventListener('blur', function() {
+            this.classList.add('bg-light');
+            this.classList.remove('bg-white');
+            this.style.boxShadow = 'none';
+        });
+    });
+</script>
+{% endblock %}

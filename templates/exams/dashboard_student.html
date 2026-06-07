@@ -44,10 +44,14 @@
         <div class="exam-card">
             <div class="exam-card-header">
                 <span class="badge badge-gold">{{ exam.subject }}</span>
-                {% if exam.pk in attempted_exam_ids %}
-                <span class="badge badge-green"><i class="bi bi-check-lg"></i> مكتمل</span>
+                {% if exam.used_attempts > 0 %}
+                    {% if exam.can_retake %}
+                        <span class="badge badge-warning"><i class="bi bi-arrow-repeat"></i> متبقي محاولات</span>
+                    {% else %}
+                        <span class="badge badge-green"><i class="bi bi-check-lg"></i> مكتمل</span>
+                    {% endif %}
                 {% else %}
-                <span class="badge badge-blue"><i class="bi bi-circle-fill"></i> متاح</span>
+                    <span class="badge badge-blue"><i class="bi bi-circle-fill"></i> متاح</span>
                 {% endif %}
             </div>
             <h5 class="exam-card-title">{{ exam.title }}</h5>
@@ -58,7 +62,7 @@
                 <span><i class="bi bi-list-ol me-1"></i>{{ exam.get_question_count }} سؤال</span>
                 <span><i class="bi bi-clock me-1"></i>{{ exam.duration }} دقيقة</span>
                 <span><i class="bi bi-award me-1"></i>{{ exam.total_marks }} درجة</span>
-                <span><i class="bi bi-repeat me-1"></i>{{ exam.max_attempts }} محاولات</span>
+                <span><i class="bi bi-repeat me-1"></i>{{ exam.used_attempts }}/{{ exam.max_allowed }} محاولة</span>
             </div>
 
             {% if exam.end_date %}
@@ -67,22 +71,35 @@
             </div>
             {% endif %}
 
-            {% if exam.pk in attempted_exam_ids %}
-            {% for a in my_attempts %}
-            {% if a.exam_id == exam.pk %}
-            <div class="exam-card-result">
-                <div class="result-score">{{ a.final_score|default:0|floatformat:0 }}/{{ exam.total_marks }}</div>
-                <div class="result-grade grade-{{ a.grade|lower }}">{{ a.grade }}</div>
-            </div>
-            <a href="{% url 'exam_result' a.pk %}" class="btn btn-outline-secondary w-100 mt-2">
-                <i class="bi bi-eye me-1"></i>عرض النتيجة
-            </a>
+            {% if exam.used_attempts > 0 %}
+                <div class="mt-3">
+                    <div class="small fw-bold mb-2">نتائج محاولاتك السابقة:</div>
+                    {% for a in my_attempts %}
+                        {% if a.exam_id == exam.pk %}
+                        <div class="d-flex align-items-center justify-content-between p-2 border rounded mb-2 bg-light">
+                            <div class="small">
+                                <i class="bi bi-calendar-check me-1"></i>{{ a.submitted_at|date:"Y/m/d" }}
+                            </div>
+                            <div class="fw-bold text-primary">{{ a.final_score|default:0|floatformat:1 }}/{{ exam.total_marks }}</div>
+                            <div class="badge {% if a.grade == 'F' %}bg-danger{% else %}bg-success{% endif %}">{{ a.grade }}</div>
+                            <a href="{% url 'exam_result' a.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2" title="عرض التفاصيل">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
             {% endif %}
-            {% endfor %}
+
+            {% if exam.can_retake %}
+                <a href="{% url 'exam_start' exam.pk %}" class="btn btn-gold w-100 mt-3 shadow-sm">
+                    <i class="bi bi-play-fill me-1"></i>
+                    {% if exam.used_attempts > 0 %}إعادة الاختبار{% else %}ابدأ الاختبار{% endif %}
+                </a>
             {% else %}
-            <a href="{% url 'exam_start' exam.pk %}" class="btn btn-gold w-100 mt-3">
-                <i class="bi bi-play-fill me-1"></i>ابدأ الاختبار
-            </a>
+                <div class="alert alert-secondary text-center small py-2 mt-3 mb-0">
+                    <i class="bi bi-lock-fill me-1"></i>استنفدت جميع المحاولات
+                </div>
             {% endif %}
         </div>
     </div>

@@ -24,7 +24,11 @@
             <div class="col-4">
                 <div class="result-stat">
                     <div class="result-stat-value {% if attempt.grade == 'F' %}text-danger{% elif attempt.grade in 'A,A+' %}text-success{% else %}text-warning{% endif %}">
-                        {{ attempt.grade|default:"-" }}
+                        {% if attempt.exam.total_marks > 0 %}
+                            {{ attempt.grade|default:"-" }}
+                        {% else %}
+                            <span class="fs-6 text-muted">بانتظار الإعداد</span>
+                        {% endif %}
                     </div>
                     <div class="result-stat-label">التقدير</div>
                 </div>
@@ -100,7 +104,7 @@
                         <span class="badge {% if answer.question.question_type in 'mcq_single,mcq_multi' %}bg-primary{% elif answer.question.question_type in 'essay,short_answer' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %} small">
                             {{ answer.question.get_question_type_display }}
                         </span>
-                        <span class="text-muted small">{{ answer.question.text|truncatechars:70 }}</span>
+                        <span class="text-muted small">{{ answer.question.text|striptags|truncatechars:70 }}</span>
                     </div>
                     <div class="fw-bold {% if answer.is_graded %}{% if answer.earned_marks == answer.question.marks %}text-success{% elif answer.earned_marks == 0 %}text-danger{% else %}text-warning{% endif %}{% else %}text-muted{% endif %}">
                         {% if answer.is_graded %}

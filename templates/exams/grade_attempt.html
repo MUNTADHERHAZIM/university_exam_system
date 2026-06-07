@@ -38,8 +38,13 @@
                 <div class="panel-body">
                     <!-- Question text -->
                     <div class="mb-3 p-3 rounded" style="background:#f8fafc;border:1px solid var(--border)">
-                        <pre class="mb-0"
-                            style="white-space:pre-wrap;font-family:Tajawal;font-size:15px;font-weight:600;color:var(--text-main)">{{ answer.question.text }}</pre>
+                        <div class="mb-0"
+                            style="font-family: inherit;font-size:15px;font-weight:600;color:var(--text-main)">{{ answer.question.text|safe }}</div>
+                        {% if answer.question.image %}
+                        <div class="mt-3 pt-3 border-top text-center">
+                            <img src="{{ answer.question.image.url }}" alt="صورة توضيحية للسؤال" class="img-fluid rounded-3" style="max-height: 300px;">
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- Student answer -->
@@ -48,7 +53,7 @@
                         {% if answer.question.question_type in 'short_answer,essay,fill_blank' %}
                         <div class="p-3 rounded border bg-white"
                             style="min-height:60px;white-space:pre-wrap;color:var(--text-main);font-weight:500;">
-                            {{ answer.answer_text|default:"(لم يجب)" }}
+                            {{ answer.decrypted_text|default:"(لم يجب)" }}
                         </div>
                         {% elif answer.question.question_type in 'mcq_single,mcq_multi' %}
                         <div>
@@ -63,12 +68,12 @@
                             {% endfor %}
                         </div>
                         {% elif answer.question.question_type == 'true_false' %}
-                        <div>إجابة الطالب: <strong>{{ answer.answer_text|default:"-" }}</strong>
+                        <div>إجابة الطالب: <strong>{{ answer.decrypted_text|default:"-" }}</strong>
                             | الصحيح: <strong>{% if answer.question.tf_answer %}صحيح{% else %}خطأ{% endif %}</strong>
                         </div>
                         {% else %}
                         <div class="text-muted small">
-                            {{answer.answer_text|default:answer.ordering_answer|default:answer.matching_answer|default:"(لم يجب)" }}</div>
+                            {{answer.decrypted_text|default:answer.decrypted_ordering|default:answer.decrypted_matching|default:"(لم يجب)" }}</div>
                         {% endif %}
                     </div>
 
@@ -137,6 +142,21 @@
                         <textarea name="grader_notes" class="form-control" rows="3"
                             placeholder="ملاحظات عامة...">{{ attempt.grader_notes }}</textarea>
                     </div>
+                    {% if attempt.snapshots.exists %}
+                    <div class="mb-3 border-top pt-3 mt-3">
+                        <div class="text-muted small mb-2"><i class="bi bi-camera-fill me-1"></i>لقطات المراقبة ({{ attempt.snapshots.count }})</div>
+                        <div class="row g-2 overflow-auto" style="max-height: 250px;">
+                            {% for snapshot in attempt.snapshots.all %}
+                            <div class="col-4">
+                                <a href="{{ snapshot.image.url }}" target="_blank">
+                                    <img src="{{ snapshot.image.url }}" class="img-fluid rounded border bg-light shadow-sm" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                </a>
+                                <div class="x-small text-muted text-center mt-1" style="font-size: 10px;">{{ snapshot.timestamp|date:"H:i" }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                     <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
                         <i class="bi bi-save-fill me-1"></i>حفظ التصحيح
                     </button>

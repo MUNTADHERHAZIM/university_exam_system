@@ -22,29 +22,29 @@
     </div>
 
     <!-- Stats Row -->
-    <div class="row g-3 mb-4">
+    <div class="row g-4 mb-5">
         <div class="col-md-3">
-            <div class="monitor-stat-card border-primary text-primary">
-                <h6>المحاولات المستمرة</h6>
-                <h3 id="stat-active" class="fw-bold mb-0">0</h3>
+            <div class="glass-card monitor-stat-card stat-indigo">
+                <div class="stat-label">المحاولات المستمرة</div>
+                <div id="stat-active" class="stat-value">0</div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="monitor-stat-card border-success text-success">
-                <h6>المحاولات المسلمة</h6>
-                <h3 id="stat-submitted" class="fw-bold mb-0">0</h3>
+            <div class="glass-card monitor-stat-card stat-emerald">
+                <div class="stat-label">المحاولات المسلمة</div>
+                <div id="stat-submitted" class="stat-value">0</div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="monitor-stat-card border-warning text-warning">
-                <h6>إجمالي المخالفات</h6>
-                <h3 id="stat-violations" class="fw-bold mb-0">0</h3>
+            <div class="glass-card monitor-stat-card stat-amber">
+                <div class="stat-label">إجمالي المخالفات</div>
+                <div id="stat-violations" class="stat-value">0</div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="monitor-stat-card border-danger text-danger">
-                <h6>تنبيهات حرجة</h6>
-                <h3 id="stat-critical" class="fw-bold mb-0">0</h3>
+            <div class="glass-card monitor-stat-card stat-rose">
+                <div class="stat-label">تنبيهات حرجة</div>
+                <div id="stat-critical" class="stat-value">0</div>
             </div>
         </div>
     </div>
@@ -58,86 +58,116 @@
             </div>
             <p class="mt-2">جاري البحث عن محاولات نشطة...</p>
         </div>
+        <!-- Snapshot Viewer Modal -->
+    <div class="modal fade" id="snapshotModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-body p-0 bg-dark text-center">
+                    <img id="modalSnapshotImg" src="" style="max-width: 100%; max-height: 80vh; object-fit: contain;">
+                    <div class="p-3 text-white">
+                        <button type="button" class="btn btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">إغلاق</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function viewSnapshot(url) {
+            if (!url || url === 'null' || url === 'undefined') return;
+            const img = document.getElementById('modalSnapshotImg');
+            img.src = url;
+            const modal = new bootstrap.Modal(document.getElementById('snapshotModal'));
+            modal.show();
+        }
+    </script>
     </div>
 </div>
 
 <style>
-    .monitor-dashboard {
-        padding: 1rem 0;
+    .monitor-dashboard { padding: 1.5rem 0; background: #f8fafc; min-height: 100vh; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .blink {
-        animation: blinker 1.5s linear infinite;
-    }
-    @keyframes blinker {
-        50% { opacity: 0; }
-    }
+    .glass-card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08); }
+
     .monitor-stat-card {
-        background: white;
-        border-radius: 12px;
         padding: 1.5rem;
-        border-bottom: 4px solid;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        transition: transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-bottom: 4px solid transparent;
     }
-    .monitor-stat-card:hover {
-        transform: translateY(-2px);
-    }
+    .monitor-stat-card.stat-indigo { border-bottom-color: #6366f1; }
+    .monitor-stat-card.stat-emerald { border-bottom-color: #10b981; }
+    .monitor-stat-card.stat-amber { border-bottom-color: #f59e0b; }
+    .monitor-stat-card.stat-rose { border-bottom-color: #f43f5e; }
+    
+    .stat-label { font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: #1e293b; }
+
     .student-monitor-card {
+        padding: 1.5rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
         background: white;
-        border-radius: 12px;
-        border: 1px solid #eee;
-        padding: 1.25rem;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
     }
-    .student-monitor-card.active {
-        border-right: 4px solid #0d6efd;
-    }
-    .student-monitor-card.submitted {
-        border-right: 4px solid #198754;
-        opacity: 0.8;
-    }
-    .student-monitor-card.critical {
-        border-right: 4px solid #dc3545;
-        background-color: #fffafb;
-        animation: pulse-danger 2s infinite;
-    }
-    @keyframes pulse-danger {
-        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
-        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    .student-monitor-card:hover { transform: scale(1.02); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border-color: #6366f1; }
+    
+    .student-monitor-card.active { border-top: 5px solid #6366f1; }
+    .student-monitor-card.submitted { border-top: 5px solid #10b981; opacity: 0.85; }
+    .student-monitor-card.critical { 
+        border: 2px solid #f43f5e; 
+        background: #fffafa; 
+        animation: glow-rose 2s infinite; 
     }
     
+    @keyframes glow-rose {
+        0% { box-shadow: 0 0 5px rgba(244, 63, 94, 0.2); }
+        50% { box-shadow: 0 0 20px rgba(244, 63, 94, 0.4); }
+        100% { box-shadow: 0 0 5px rgba(244, 63, 94, 0.2); }
+    }
+
     .status-badge {
-        font-size: 0.75rem;
-        padding: 0.3rem 0.6rem;
-        border-radius: 20px;
+        font-size: 0.7rem; font-weight: 700; padding: 4px 12px; border-radius: 100px; text-transform: uppercase;
     }
+    .badge-indigo { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+    .badge-emerald { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .badge-gray { background: #f1f5f9; color: #64748b; }
+
+    .snapshot-frame {
+        position: relative; width: 100%; aspect-ratio: 4/3; border-radius: 12px; overflow: hidden;
+        background: #f1f5f9; cursor: pointer; transition: 0.3s;
+    }
+    .snapshot-frame:hover img { transform: scale(1.05); }
+    .snapshot-frame img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
     
-    .metric {
-        font-size: 0.85rem;
-        color: #6c757d;
-        margin-bottom: 0.25rem;
+    .violation-tag {
+        display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px;
+        font-size: 0.75rem; font-weight: 700;
     }
-    .metric-val {
-        font-weight: 600;
-        color: #212529;
-    }
-    .violation-pill {
-        display: inline-flex;
-        align-items: center;
-        background: #fff3cd;
-        color: #856404;
-        border-radius: 20px;
-        padding: 2px 8px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-    .violation-pill.high {
-        background: #f8d7da;
-        color: #721c24;
+    .violation-tag.none { background: #ecfdf5; color: #059669; }
+    .violation-tag.warn { background: #fffbeb; color: #d97706; }
+    .violation-tag.crit { background: #fff1f2; color: #e11d48; }
+
+    .blink { animation: pulse-opacity 1s infinite; }
+    @keyframes pulse-opacity { 50% { opacity: 0.4; } }
+    
+    .modal-glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(8px);
     }
 </style>
 
@@ -153,39 +183,54 @@
 
         let badgeHtml = '';
         if (attempt.status === 'active') {
-             badgeHtml = '<span class="status-badge bg-primary text-white"><i class="bi bi-record-circle me-1 blink"></i>مستمر</span>';
+             badgeHtml = '<span class="status-badge badge-indigo"><i class="bi bi-record-circle me-1 blink"></i>مباشر</span>';
         } else if (attempt.status === 'submitted') {
-             badgeHtml = '<span class="status-badge bg-success text-white"><i class="bi bi-check-circle me-1"></i>مسلّم ('+attempt.score_pct+'%)</span>';
+             badgeHtml = '<span class="status-badge badge-emerald"><i class="bi bi-check-circle me-1"></i>تم التسليم</span>';
         } else {
-             badgeHtml = '<span class="status-badge bg-secondary text-white">انتهى الوقت</span>';
+             badgeHtml = '<span class="status-badge badge-gray">مكتمل</span>';
         }
 
-        let violationClass = attempt.violations >= 3 ? 'high' : '';
-        let violationHtml = `<div class="violation-pill ${violationClass} mt-2"><i class="bi bi-shield-exclamation me-1"></i>${attempt.violations} مخالفة</div>`;
-        if (attempt.violations === 0) {
-            violationHtml = `<div class="violation-pill mt-2" style="background:#d4edda;color:#155724;"><i class="bi bi-shield-check me-1"></i>0 مخالفات</div>`;
-        }
+        let violTag = 'none';
+        if (attempt.violations > 0) violTag = attempt.violations >= 3 ? 'crit' : 'warn';
+        
+        let violationHtml = `<div class="violation-tag ${violTag}"><i class="bi bi-shield-${violTag === 'none' ? 'check' : 'exclamation'} me-1"></i>${attempt.violations} مخالفة</div>`;
+
+        let snapshotHtml = `
+            <div class="snapshot-frame mt-3 mb-3" onclick="viewSnapshot('${attempt.latest_snapshot}')">
+                ${attempt.latest_snapshot 
+                    ? `<img src="${attempt.latest_snapshot}" alt="Snapshot">`
+                    : `<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted opacity-50">
+                        <i class="bi bi-camera-video-off fs-3 mb-1"></i>
+                        <span style="font-size: 0.7rem;">لا يوجد لقطة</span>
+                       </div>`
+                }
+            </div>
+        `;
 
         return `
         <div class="col-md-4 col-lg-3">
             <div class="student-monitor-card ${statusClass}">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h6 class="fw-bold mb-0 text-truncate" title="${attempt.student_name}"><i class="bi bi-person-circle text-muted me-2"></i>${attempt.student_name}</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0 text-truncate" style="max-width: 120px;" title="${attempt.student_name}">${attempt.student_name}</h6>
                     ${badgeHtml}
                 </div>
                 
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="metric">البدء: <span class="metric-val" dir="ltr">${attempt.started_at}</span></span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="metric">الوقت المتبقي: <span class="metric-val text-primary" dir="ltr">${attempt.time_left}</span></span>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">البدء</span>
+                        <span class="fw-bold" dir="ltr">${attempt.started_at}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">المتبقي</span>
+                        <span class="fw-bold text-primary" dir="ltr">${attempt.time_left}</span>
+                    </div>
                 </div>
                 
-                <hr class="my-2 border-light">
-                
-                <div class="d-flex justify-content-between align-items-end">
+                ${snapshotHtml}
+
+                <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
                     ${violationHtml}
-                    <span class="metric" style="font-size: 0.7rem;">IP: ${attempt.ip || 'غير معروف'}</span>
+                    <span class="text-muted" style="font-size: 0.65rem;">ID: ${attempt.attempt_id}</span>
                 </div>
             </div>
         </div>
@@ -233,10 +278,62 @@
             .catch(err => console.error('Error fetching monitor data:', err));
     }
 
-    // Start polling every 3 seconds
+    // WebSocket Integration
+    function initMonitorWebSocket() {
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsUrl = `${wsScheme}://${window.location.host}/ws/exam-monitor/{{ exam.pk }}/`;
+        const socket = new WebSocket(wsUrl);
+
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log("Monitor update:", data);
+            
+            if (data.type === 'proctor_notification') {
+                handleViolationUpdate(data);
+            }
+        };
+
+        socket.onclose = function(e) {
+            console.warn("Monitor socket closed. Retrying in 5s...");
+            setTimeout(initMonitorWebSocket, 5000);
+        };
+    }
+
+    function handleViolationUpdate(data) {
+        // Show a temporary toast or notification
+        showToast(`مخالفة جديدة: ${data.student_name}`, data.message, 'danger');
+        
+        // Refresh data to update cards (or we could update the specific card if we had more info)
+        fetchMonitorData();
+    }
+
+    function showToast(title, msg, type) {
+        // Simplified toast - or just alert if no toast system
+        const toastContainer = document.getElementById('toast-container') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} shadow-sm border-0 fade show`;
+        toast.innerHTML = `<strong>${title}</strong>: ${msg}`;
+        toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toast-container';
+        div.style.position = 'fixed';
+        div.style.top = '20px';
+        div.style.left = '20px';
+        div.style.zIndex = '9999';
+        div.style.width = '300px';
+        document.body.appendChild(div);
+        return div;
+    }
+
+    // Start polling every 10 seconds as a fallback, but rely on WS for real-time
     document.addEventListener("DOMContentLoaded", function() {
         fetchMonitorData();
-        refreshInterval = setInterval(fetchMonitorData, 3000);
+        initMonitorWebSocket();
+        refreshInterval = setInterval(fetchMonitorData, 10000); // Increased interval since we have WS
     });
 </script>
 {% endblock %}

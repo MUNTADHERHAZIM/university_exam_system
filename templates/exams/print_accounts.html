@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>طباعة بطاقات الحسابات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #fff;
+            color: #1a1a2e;
+            padding: 10mm;
+        }
+        .print-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #1a1a2e;
+        }
+        .print-header h1 {
+            font-size: 24px;
+            font-weight: 900;
+            color: #1a1a2e;
+        }
+        .print-header p {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .account-card {
+            border: 2px solid #1a1a2e;
+            border-radius: 12px;
+            padding: 16px;
+            page-break-inside: avoid;
+            position: relative;
+            overflow: hidden;
+        }
+        .account-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(135deg, #c9a227, #e8d48b);
+        }
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #ddd;
+        }
+        .card-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .card-role {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .role-student { background: #2563eb; }
+        .role-admin { background: #16a34a; }
+        .role-assistant { background: #0891b2; }
+        
+        .card-detail {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 3px 0;
+        }
+        .card-detail .label {
+            color: #888;
+            font-weight: 500;
+        }
+        .card-detail .value {
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .credentials {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px dashed #c9a227;
+        }
+        .credentials .cred-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 2px 0;
+        }
+        .credentials .cred-label {
+            color: #666;
+        }
+        .credentials .cred-value {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            color: #c9a227;
+            letter-spacing: 1px;
+            direction: ltr;
+        }
+        .no-print { margin: 20px 0; text-align: center; }
+        .no-print button {
+            padding: 10px 30px;
+            font-size: 16px;
+            font-weight: 700;
+            background: #1a1a2e;
+            color: #c9a227;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Tajawal';
+        }
+        .no-print button:hover { background: #16213e; }
+        
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 5mm; }
+            .account-card { border-width: 1px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button onclick="window.print()">🖨️ طباعة البطاقات</button>
+        <button onclick="window.close()" style="background:#666; margin-right:10px;">✕ إغلاق</button>
+    </div>
+
+    <div class="print-header">
+        <h1>🎓 نظام الاختبارات الجامعي</h1>
+        <p>بطاقات الحسابات المولّدة {% if batch %} — الدفعة: {{ batch }}{% endif %}</p>
+    </div>
+
+    <div class="cards-grid">
+        {% for acc in accounts %}
+        <div class="account-card">
+            <div class="card-header-row">
+                <div class="card-name">{{ acc.user.get_full_name|default:acc.user.username }}</div>
+                <span class="card-role role-{{ acc.role }}">{{ acc.get_role_display }}</span>
+            </div>
+            
+            <div class="card-detail">
+                <span class="label">الكلية:</span>
+                <span class="value">{{ acc.get_college_name }}</span>
+            </div>
+            <div class="card-detail">
+                <span class="label">القسم:</span>
+                <span class="value">{{ acc.get_department_name }}</span>
+            </div>
+            {% if acc.student_id %}
+            <div class="card-detail">
+                <span class="label">الرقم الجامعي:</span>
+                <span class="value">{{ acc.student_id }}</span>
+            </div>
+            {% endif %}
+            {% if acc.level %}
+            <div class="card-detail">
+                <span class="label">المستوى:</span>
+                <span class="value">{{ acc.get_level_display_safe }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="credentials">
+                <div class="cred-row">
+                    <span class="cred-label">اسم المستخدم:</span>
+                    <span class="cred-value">{{ acc.user.username }}</span>
+                </div>
+                <div class="cred-row">
+                    <span class="cred-label">كلمة المرور:</span>
+                    <span class="cred-value">{{ acc.generated_password|default:"***" }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

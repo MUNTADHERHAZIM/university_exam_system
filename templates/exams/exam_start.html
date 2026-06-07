@@ -208,6 +208,7 @@
     <!-- Start Button -->
     <form method="post" id="startForm">
         {% csrf_token %}
+        <input type="hidden" name="snapshot_data" id="snapshot_data">
         <button type="submit" class="btn btn-primary start-btn w-100" id="startBtn" disabled>
             <i class="bi bi-play-circle-fill me-2"></i>ابدأ الاختبار الآن
         </button>
@@ -291,6 +292,19 @@ document.getElementById('startForm').addEventListener('submit', function(e) {
         e.preventDefault();
         return;
     }
+    
+    // Capture Photo
+    if ("{{ exam.require_camera|yesno:'true,false' }}" === "true") {
+        try {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            document.getElementById('snapshot_data').value = canvas.toDataURL('image/jpeg', 0.8);
+        } catch(err) {}
+    }
+
     // Enter fullscreen
     try {
         const elem = document.documentElement;

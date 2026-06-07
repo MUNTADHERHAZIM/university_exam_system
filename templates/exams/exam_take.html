@@ -60,11 +60,8 @@
                             class="fw-bold text-primary">0</span> / {{ total_questions }}</p>
                     <p class="text-muted small">بعد التسليم لا يمكنك العودة للتعديل.</p>
                     <div class="d-grid gap-2 mt-4">
-                        <form method="post" action="{% url 'exam_submit' attempt.pk %}" id="submitForm" class="w-100">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold"
-                                style="border-radius: 12px;">✓ تأكيد التسليم</button>
-                        </form>
+                            <button type="button" class="btn btn-primary w-100 py-3 fw-bold"
+                                style="border-radius: 12px;" onclick="document.getElementById('mainExamForm').submit()">✓ تأكيد التسليم</button>
                         <button class="btn btn-ghost w-100 py-2" data-bs-dismiss="modal"
                             style="border-radius: 12px;">العودة للمراجعة</button>
                     </div>
@@ -149,7 +146,12 @@
                 </div>
 
                 <div class="q-text">
-                    <pre class="q-text-pre">{{ q.text }}</pre>
+                    <div class="q-text-pre" style="font-family: inherit;">{{ q.text|safe }}</div>
+                    {% if q.image %}
+                    <div class="mt-3 mb-4 text-center">
+                        <img src="{{ q.image.url }}" alt="صورة توضيحية للسؤال" class="img-fluid rounded-3 shadow-sm" style="max-height: 400px;">
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- ── MCQ Single ── -->
@@ -311,14 +313,14 @@
             </div>
     <!-- Chat Overlay -->
     <div id="chatWidget" class="chat-widget">
-        <button class="chat-toggle" onclick="toggleChat()">
+        <button type="button" class="chat-toggle" onclick="toggleChat()">
             <i class="bi bi-chat-dots-fill"></i>
             <span id="chatBadge" class="badge bg-danger rounded-pill d-none">0</span>
         </button>
         <div id="chatWindow" class="chat-window d-none">
             <div class="chat-header">
                 <span><i class="bi bi-chat-quote-fill me-2"></i>التواصل مع المراقب</span>
-                <button class="btn-close btn-close-white" onclick="toggleChat()"></button>
+                <button type="button" class="btn-close btn-close-white" onclick="toggleChat()"></button>
             </div>
             <div id="chatBody" class="chat-body">
                 <!-- Messages go here -->
@@ -326,25 +328,105 @@
             </div>
             <div class="chat-footer">
                 <input type="text" id="chatInput" class="form-control" placeholder="اكتب رسالة..." onkeypress="if(event.key==='Enter') sendChat()">
-                <button class="btn btn-primary" onclick="sendChat()"><i class="bi bi-send"></i></button>
+                <button type="button" class="btn btn-primary" onclick="sendChat()"><i class="bi bi-send"></i></button>
             </div>
         </div>
     </div>
 
     <style>
-        .chat-widget { position: fixed; bottom: 20px; left: 20px; z-index: 2000; }
-        .chat-toggle { width: 60px; height: 60px; border-radius: 50%; background: var(--main); color: white; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.3s; position: relative; }
-        .chat-toggle:hover { transform: scale(1.1); }
-        .chat-window { position: absolute; bottom: 70px; left: 0; width: 350px; height: 450px; background: white; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid var(--border); }
-        .chat-header { background: var(--main); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .chat-body { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8f9fa; }
-        .chat-message { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; position: relative; }
-        .chat-message.me { align-self: flex-end; background: var(--main); color: white; border-bottom-right-radius: 2px; }
-        .chat-message.other { align-self: flex-start; background: #e9ecef; color: #212529; border-bottom-left-radius: 2px; }
-        .chat-footer { padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
-        .chat-footer input { border-radius: 10px; }
-        .chat-footer button { border-radius: 10px; width: 50px; }
-        .msg-time { font-size: 0.7rem; opacity: 0.7; display: block; margin-top: 5px; text-align: left; }
+        .chat-widget { position: fixed; bottom: 30px; left: 30px; z-index: 2000; direction: rtl; }
+        .chat-toggle { 
+            width: 65px; height: 65px; border-radius: 20px; 
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white; border: none; 
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.8rem; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            position: relative; overflow: hidden;
+        }
+        .chat-toggle:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 35px rgba(79, 70, 229, 0.5); }
+        .chat-toggle::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%); opacity: 0; transition: 0.5s; }
+        .chat-toggle:hover::before { opacity: 1; transform: rotate(15deg); }
+        
+        .chat-window { 
+            position: absolute; bottom: 85px; left: 0; width: 380px; height: 520px; 
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.4); 
+            transform-origin: bottom left; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0; transform: scale(0.8) translateY(20px); pointer-events: none;
+        }
+        .chat-window.active { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        
+        .chat-header { 
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); 
+            padding: 16px 24px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+        .chat-header span { font-weight: 700; color: white; letter-spacing: -0.3px; }
+        .chat-header .btn-close { filter: brightness(0) invert(1); opacity: 0.8; transition: 0.3s; }
+        .chat-header .btn-close:hover { opacity: 1; transform: rotate(90deg); }
+        
+        .chat-body { 
+            flex-grow: 1; padding: 24px; overflow-y: auto; display: flex; 
+            flex-direction: column; gap: 12px; 
+            background: #f8fafc; /* solid light background for perfect contrast */
+        }
+        
+        .chat-message { 
+            max-width: 80%; padding: 12px 18px; border-radius: 18px; 
+            font-size: 0.95rem; line-height: 1.5; position: relative; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); word-wrap: break-word;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* 'me' messages (Student) - Align to Left */
+        .chat-message.me { 
+            align-self: flex-start;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); 
+            color: white; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* 'other' messages (Proctor) - Align to Right */
+        .chat-message.other { 
+            align-self: flex-end; 
+            background: white; color: #1e293b; 
+            border-bottom-right-radius: 4px; border: 1px solid #e2e8f0;
+        }
+        
+        .msg-time { font-size: 0.65rem; opacity: 0.8; display: block; margin-top: 6px; }
+        .chat-message.me .msg-time { color: rgba(255,255,255,0.9); }
+        .chat-message.other .msg-time { color: #64748b; }
+
+        .chat-footer { padding: 16px 20px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; align-items: center; }
+        .chat-footer .form-control { border-radius: 12px; background: #f1f5f9; border: 1px solid transparent; padding: 10px 16px; font-size: 0.9rem; }
+        .chat-footer .form-control:focus { border-color: #6366f1; background: white; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        
+        .chat-footer .btn-send { 
+            width: 44px; height: 44px; border-radius: 12px; 
+            background: #6366f1; color: white; display: flex; 
+            align-items: center; justify-content: center; border: none;
+            transition: all 0.3s;
+        }
+        .chat-footer .btn-send:hover { background: #4f46e5; transform: scale(1.05); box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3); }
+
+        /* RTL Specifics */
+        .chat-body::-webkit-scrollbar { width: 6px; }
+        .chat-body::-webkit-scrollbar-track { background: transparent; }
+        .chat-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.05); border-radius: 10px; }
+        
+        /* Pulse for new messages */
+        @keyframes pulse-chat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); box-shadow: 0 0 20px rgba(79, 70, 229, 0.6); }
+            100% { transform: scale(1); }
+        }
+        .chat-pulse { animation: pulse-chat 1.5s infinite; }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -425,11 +507,24 @@
             document.getElementById('violationCount').textContent = violations;
             document.getElementById('topbarViolations').textContent = violations;
             document.getElementById('violationBadge').classList.remove('d-none');
+            
+            // Immediate Snapshot on Violation
+            takeSnapshot();
+
             fetch(VIOLATION_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRFTOKEN },
                 body: JSON.stringify({ type, details })
             });
+
+            // WebSocket update for monitor
+            if (proctorSocket && proctorSocket.readyState === WebSocket.OPEN) {
+                proctorSocket.send(JSON.stringify({
+                    action: 'violation',
+                    type: type,
+                    details: details
+                }));
+            }
 
             let modal = bootstrap.Modal.getInstance(modalEl);
             if (!modal) modal = new bootstrap.Modal(modalEl);
@@ -629,8 +724,9 @@
 
         // ── Active Proctoring (Camera, Mic, Fullscreen, Audio Detection) ──────
         let audioContext, analyser, microphone, javascriptNode;
-        const NOISE_THRESHOLD = 0.2; // Adjust based on calibration
+        const NOISE_THRESHOLD = 0.45; // Increased threshold for better reliability
         let lastNoiseViolation = 0;
+        let sustainedNoiseCounter = 0; // Buffer for continuous noise
 
         function setupProctoring() {
             // Camera & Audio Analysis
@@ -661,11 +757,17 @@
                         const volume = average / 128; // 0 to 2
 
                         if (volume > NOISE_THRESHOLD) {
-                            const now = Date.now();
-                            if (now - lastNoiseViolation > 10000) { // Log once every 10s
-                                logViolation('high_noise', 'رصد ضجيج مرتفع أو أصوات جانبية');
-                                lastNoiseViolation = now;
+                            sustainedNoiseCounter++;
+                            if (sustainedNoiseCounter > 35) { // Needs sustained noise for ~1.6s
+                                const now = Date.now();
+                                if (now - lastNoiseViolation > 20000) { // Limit frequency
+                                    logViolation('high_noise', 'رصد ضجيج مرتفع أو أصوات مستمرة');
+                                    lastNoiseViolation = now;
+                                }
+                                sustainedNoiseCounter = 0;
                             }
+                        } else {
+                            sustainedNoiseCounter = Math.max(0, sustainedNoiseCounter - 0.5); // Slow decay
                         }
                     };
                 })
@@ -684,42 +786,215 @@
                     logViolation('fullscreen_exit', 'تم الخروج من وضع ملء الشاشة');
                 }
             }, 5000);
+
+            // ── Periodic Snapshots Logic (Moved to global scope below) ──
+            setTimeout(takeSnapshot, 30000); // Start first snapshot after 30s
+
+            // ── Server-Side Auto-Save (Every 10s) ──
+            setInterval(async () => {
+                const form = document.getElementById('mainExamForm');
+                const formData = new FormData(form);
+                const questions = new Set();
+                
+                // Group by question ID
+                for (let [key, value] of formData.entries()) {
+                    if (key.startsWith('q_')) {
+                        const qid = key.split('_')[1];
+                        questions.add(qid);
+                    }
+                }
+
+                for (let qid of questions) {
+                    let value;
+                    const inputs = form.querySelectorAll(`[name="q_${qid}"], [name^="q_${qid}_"]`);
+                    
+                    // Handle different types
+                    const first = inputs[0];
+                    if (!first) continue;
+
+                    if (first.type === 'radio') {
+                        const checked = [...inputs].find(i => i.checked);
+                        value = checked ? checked.value : '';
+                    } else if (first.type === 'checkbox') {
+                        value = [...inputs].filter(i => i.checked).map(i => i.value);
+                    } else if (first.tagName === 'SELECT' && first.name.includes('_left_')) {
+                        // Matching
+                        value = {};
+                        inputs.forEach(i => { if (i.value) value[i.name.split('_left_')[1]] = i.value; });
+                    } else {
+                        value = first.value;
+                    }
+
+                    // Only save if it's in the 'answered' set (dirty check would be better but let's keep it simple as requested)
+                    if (answered.has(qid)) {
+                        fetch(`/attempts/${ATTEMPT_ID}/save-answer/`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRFTOKEN },
+                            body: JSON.stringify({ question_id: qid, value: value })
+                        });
+                    }
+                }
+                
+                // Visual Indicator
+                const timerS = document.getElementById('timerDisplay');
+                const original = timerS.style.color;
+                timerS.style.color = '#10b981'; // Success green
+                setTimeout(() => timerS.style.color = original, 1000);
+                
+            }, 10000);
+        }
+
+        // ── Periodic Snapshots (Global Scope) ──
+        let snapshotTimer = null;
+        function takeSnapshot() {
+            const video = document.getElementById('pipVideo');
+            if (!video || !video.videoWidth) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            canvas.toBlob(blob => {
+                if (!blob || blob.size < 100) return; // Don't upload empty blobs
+                const formData = new FormData();
+                formData.append('image', blob, 'snapshot.jpg');
+                fetch(`/attempts/${ATTEMPT_ID}/snapshot/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': CSRFTOKEN },
+                    body: formData
+                }).then(res => res.json()).then(data => {
+                    console.log("Snapshot saved:", data);
+                }).catch(err => console.error("Snapshot error:", err));
+            }, 'image/jpeg', 0.7);
+
+            // Schedule next periodic snapshot
+            clearTimeout(snapshotTimer);
+            const next = (Math.floor(Math.random() * (300 - 120 + 1)) + 120) * 1000;
+            snapshotTimer = setTimeout(takeSnapshot, next);
         }
 
         // Initialize when page loads
         document.addEventListener("DOMContentLoaded", () => {
             loadFromLocal();
             setupProctoring();
-            startTimer();
-            // Attempt to go fullscreen (works if browser allows, otherwise caught on first click or 5s violation)
+            initWebSockets();
+            loadChat(); // Ensure chat is loaded
+            // Attempt to go fullscreen
             requestFullscreen();
         });
-        
-        // Auto-save on input
+        let proctorSocket = null;
+        let chatSocket = null;
+
+        function initWebSockets() {
+            // Close existing sockets if they already exist to prevent multiple event listeners
+            if (proctorSocket) {
+                proctorSocket.onclose = null; // Prevent retry loop
+                proctorSocket.close();
+            }
+            if (chatSocket) {
+                chatSocket.onclose = null;
+                chatSocket.close();
+            }
+
+            const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+            const proctorUrl = `${wsScheme}://${window.location.host}/ws/proctor/${ATTEMPT_ID}/`;
+            const chatUrl = `${wsScheme}://${window.location.host}/ws/chat/${ATTEMPT_ID}/`;
+
+            // Proctor Socket
+            proctorSocket = new WebSocket(proctorUrl);
+            proctorSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                console.log("Proctor event:", data);
+            };
+            proctorSocket.onclose = function(e) {
+                console.warn("Proctor socket closed. Retrying in 5s...");
+                setTimeout(initWebSockets, 5000);
+            };
+
+            // Chat Socket
+            chatSocket = new WebSocket(chatUrl);
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                if (data.type === 'chat_message') {
+                    appendChatMessage(data);
+                }
+            };
+            chatSocket.onclose = function(e) {
+                console.warn("Chat socket closed.");
+            };
+        }
+
+        const displayedMessages = new Set();
+
+        function appendChatMessage(data) {
+            const body = document.getElementById('chatBody');
+            
+            // Deduplication: prevent adding the same message twice in the same session
+            const msgKey = `${data.sender_id}_${data.message}_${data.timestamp}`;
+            if (displayedMessages.has(msgKey)) return;
+            displayedMessages.add(msgKey);
+
+            const placeholder = body.querySelector('.text-muted');
+            if (placeholder) placeholder.remove();
+
+            const isMe = data.sender_id == "{{ request.user.id }}";
+            const msgHtml = `
+                <div class="chat-message ${isMe ? 'me' : 'other'}" style="opacity:0; transform:translateY(20px);">
+                    <div class="fw-bold small mb-1">${isMe ? 'أنت' : data.sender}</div>
+                    <div>${data.message}</div>
+                    <span class="msg-time">${data.timestamp}</span>
+                </div>
+            `;
+            body.insertAdjacentHTML('beforeend', msgHtml);
+            
+            // Animate message entry
+            const lastMsg = body.lastElementChild;
+            setTimeout(() => {
+                lastMsg.style.opacity = '1';
+                lastMsg.style.transform = 'translateY(0)';
+            }, 50);
+
+            body.scrollTop = body.scrollHeight;
+
+            if (!isMe && !chatOpen) {
+                const badge = document.getElementById('chatBadge');
+                badge.textContent = parseInt(badge.textContent || 0) + 1;
+                badge.classList.remove('d-none');
+                // Add pulse to toggle
+                document.querySelector('.chat-toggle').classList.add('chat-pulse');
+            }
+        }
+
+        // ── Form & Storage Events ──────────────────────────────────────────
         document.getElementById('mainExamForm').addEventListener('input', saveToLocal);
-        
-        // Clear local storage on submit
         document.getElementById('submitForm').addEventListener('submit', () => {
             localStorage.removeItem(STORAGE_KEY);
         });
         
-        // Ensure fullscreen immediately if not already
         // ── Chat Logic ──────────────────────────────────────────────────────
         let chatOpen = false;
-        let lastMsgId = 0;
 
         function toggleChat() {
             chatOpen = !chatOpen;
             const win = document.getElementById('chatWindow');
-            win.classList.toggle('d-none');
+            const toggle = document.querySelector('.chat-toggle');
+            
             if (chatOpen) {
-                document.getElementById('chatBadge').classList.add('d-none');
-                document.getElementById('chatBadge').textContent = '0';
-                loadChat();
-                setTimeout(() => {
-                    const cb = document.getElementById('chatBody');
-                    cb.scrollTop = cb.scrollHeight;
-                }, 100);
+                win.classList.remove('d-none');
+                setTimeout(() => win.classList.add('active'), 10);
+                
+                const badge = document.getElementById('chatBadge');
+                badge.classList.add('d-none');
+                badge.textContent = '0';
+                toggle.classList.remove('chat-pulse');
+                
+                const cb = document.getElementById('chatBody');
+                cb.scrollTop = cb.scrollHeight;
+            } else {
+                win.classList.remove('active');
+                setTimeout(() => win.classList.add('d-none'), 400);
             }
         }
 
@@ -728,51 +1003,45 @@
                 const res = await fetch(`{% url 'get_chat_messages' attempt.pk %}`);
                 const data = await res.json();
                 const body = document.getElementById('chatBody');
-                let html = '';
-                let newMsgs = 0;
-
-                data.messages.forEach(m => {
-                    html += `
-                        <div class="chat-message ${m.is_me ? 'me' : 'other'}">
-                            <div class="fw-bold small mb-1">${m.sender}</div>
-                            <div>${m.message}</div>
-                            <span class="msg-time">${m.timestamp}</span>
-                        </div>
-                    `;
-                    if (m.id > lastMsgId && !m.is_me) newMsgs++;
-                    if (m.id > lastMsgId) lastMsgId = m.id;
-                });
-
-                if (html) body.innerHTML = html;
-                
-                if (newMsgs > 0 && !chatOpen) {
-                    const badge = document.getElementById('chatBadge');
-                    badge.textContent = parseInt(badge.textContent) + newMsgs;
-                    badge.classList.remove('d-none');
-                }
-
-                if (chatOpen) body.scrollTop = body.scrollHeight;
+                body.innerHTML = '';
+                data.messages.forEach(m => appendChatMessage({
+                    message: m.message,
+                    sender: m.sender,
+                    sender_id: m.is_me ? "{{ request.user.id }}" : 0,
+                    timestamp: m.timestamp
+                }));
             } catch (err) { console.error("Chat load error", err); }
         }
 
-        async function sendChat() {
+        function sendChat() {
             const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if (!text) return;
+            const message = input.value.trim();
+            if (!message) return;
             
-            input.value = '';
-            try {
-                const res = await fetch(`{% url 'send_chat_message' attempt.pk %}`, {
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({ message: message }));
+                input.value = '';
+            } else {
+                // Fallback to AJAX
+                fetch(`{% url 'send_chat_message' attempt.pk %}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRFTOKEN },
-                    body: JSON.stringify({ message: text })
+                    body: JSON.stringify({ message: message })
+                }).then(res => res.json()).then(data => {
+                    if (data.status === 'ok') {
+                        input.value = '';
+                        appendChatMessage({
+                            message: message,
+                            sender: 'أنت',
+                            sender_id: "{{ request.user.id }}",
+                            timestamp: data.timestamp
+                        });
+                    }
                 });
-                if (res.ok) loadChat();
-            } catch (err) { console.error("Chat send error", err); }
+            }
         }
-
-        // Poll chat every 5 seconds
-        setInterval(loadChat, 5000);
+        
+        // Initialization scheduled in first DOMContentLoaded block
 
         // ── Ace Editor Init ────────────────────────────────────────────────
         document.querySelectorAll('.ace-box').forEach(el => {

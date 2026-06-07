@@ -1,0 +1,257 @@
+{% extends "admin/base.html" %}
+
+{% load static %}
+
+{% block title %}{{ title }} | نظام الاختبارات الجامعي{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">🎓 <span style="font-weight: 800; letter-spacing: -0.5px;">إدارة نظام الاختبارات</span></a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Google Fonts for Arabic */
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
+    /* ──── MODERN MINIMALIST SYSTEM (Vercel/GitHub Style) ──── */
+    :root {
+        /* LIGHT MODE Variables */
+        --primary: #2563eb;
+        --bg-main: #ffffff;
+        --bg-sub: #f9fafb;
+        --fg-main: #111827;
+        --fg-muted: #4b5563;
+        --border: #e2e8f0;
+        --header-bg: #0f172a;
+    }
+
+    /* Standard Django 5.x Dark Mode Support */
+    :root[data-theme="dark"], 
+    html[data-theme="dark"],
+    body.theme-dark {
+        /* DARK MODE Variables */
+        --primary: #3b82f6;
+        --bg-main: #020617;     /* Slate 950 */
+        --bg-sub: #0f172a;      /* Slate 900 */
+        --fg-main: #f9fafb;     /* Gray 50 */
+        --fg-muted: #9ca3af;    /* Gray 400 */
+        --border: #1e293b;      /* Slate 800 */
+        --header-bg: #020617;   /* Slate 950 */
+    }
+
+    /* Target Dark Mode also via Media Query for robustness */
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+            --primary: #3b82f6;
+            --bg-main: #020617;
+            --bg-sub: #0f172a;
+            --fg-main: #f9fafb;
+            --fg-muted: #9ca3af;
+            --border: #1e293b;
+            --header-bg: #020617;
+        }
+    }
+
+    /* Global Body Refresh */
+    body {
+        font-family: 'Tajawal', sans-serif !important;
+        background-color: var(--bg-main) !important;
+        color: var(--fg-main) !important;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    #container {
+        background-color: var(--bg-main) !important;
+    }
+
+    /* ──── CONTENT AREA (Major Fix for Dark Mode) ──── */
+    #content-main, #content, .module, fieldset, .inline-group, .stacked, .aligned {
+        background-color: var(--bg-main) !important;
+        color: var(--fg-main) !important;
+    }
+
+    .form-row, .field-box {
+        background-color: var(--bg-main) !important;
+        border-bottom: 1px solid var(--border) !important;
+        color: var(--fg-main) !important;
+    }
+
+    fieldset.module, .module table, .inline-related {
+        border: 1px solid var(--border) !important;
+        background-color: var(--bg-main) !important;
+    }
+
+    /* ──── HEADER & BREADCRUMBS ──── */
+    #header {
+        background: var(--header-bg) !important;
+        color: white !important;
+        padding: 12px 24px !important;
+        border-bottom: 3px solid var(--primary) !important;
+    }
+
+    div.breadcrumbs {
+        background: var(--bg-sub) !important;
+        color: var(--fg-muted) !important;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    div.breadcrumbs a {
+        color: var(--primary) !important;
+        font-weight: 600 !important;
+    }
+
+    /* ──── CONTENT & CARDS ──── */
+    #content {
+        padding: 24px !important;
+    }
+
+    .module {
+        background: var(--bg-main) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 8px !important;
+        margin-bottom: 24px !important;
+        box-shadow: var(--card-shadow) !important;
+        overflow: hidden !important;
+    }
+
+    caption, .module h2 {
+        background: var(--bg-sub) !important;
+        color: var(--fg-main) !important;
+        border-bottom: 1px solid var(--border) !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
+    }
+
+    /* Sidebar Fix for Modules */
+    #content-main .module h2, #content-related .module h2 {
+        background: var(--bg-sub) !important;
+        color: var(--fg-main) !important;
+    }
+
+    /* ──── TABLES (SaaS Style) ──── */
+    table thead th {
+        background: var(--bg-sub) !important;
+        color: var(--fg-muted) !important;
+        font-weight: 800 !important;
+        border-bottom: 2px solid var(--border) !important;
+    }
+
+    tr, td {
+        background: var(--bg-main) !important;
+        color: var(--fg-main) !important;
+    }
+
+    tr:hover td {
+        background: var(--bg-sub) !important;
+    }
+
+    /* ──── FORMS & INPUTS ──── */
+    .form-row {
+        padding: 16px !important;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    .form-row label {
+        color: var(--fg-main) !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        width: 160px !important;
+        float: right !important;
+        margin-top: 8px !important;
+    }
+
+    input[type=text], input[type=password], input[type=email], select, textarea, .vTextField {
+        background: var(--bg-main) !important;
+        color: var(--fg-main) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+        min-height: 40px !important;
+        transition: border-color 0.2s ease !important;
+        width: 100% !important;
+        max-width: 400px !important;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: var(--primary) !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
+    }
+
+    /* Buttons & Actions (Consistent SaaS style) */
+    .button, input[type=submit], .submit-row input, a.addlink, a.changelink {
+        background: var(--primary) !important;
+        color: white !important;
+        padding: 8px 16px !important;
+        border-radius: 6px !important;
+        font-weight: 700 !important;
+        border: none !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+    }
+
+    input[type=button], .button.default, .submit-row input.default {
+        background: var(--primary) !important;
+    }
+
+    .help, .help-block, .help-inline, .info, .errorlist {
+        font-size: 12px !important;
+    }
+
+    .help, .info { color: var(--fg-muted) !important; }
+    .errorlist li { color: #ef4444 !important; font-weight: 700 !important; }
+
+    /* Dashboard & Sidebar Refinements */
+    .dashboard #content-main {
+        width: 100% !important;
+    }
+
+    #content-related {
+        background: var(--bg-sub) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--fg-main) !important;
+        border-radius: 8px !important;
+    }
+
+    #content-related .module h2 {
+        background: var(--header-bg) !important;
+        color: white !important;
+    }
+
+    .dashboard .module table th {
+        width: 100% !important;
+    }
+
+    /* Fixed visibility for labels in dark mode */
+    label, .label {
+        color: var(--fg-main) !important;
+    }
+
+    /* ──── SIDEBAR FILTERS ──── */
+    #changelist-filter {
+        background: var(--bg-main) !important;
+        border-right: 1px solid var(--border) !important;
+    }
+
+    #changelist-filter h2 {
+        background: var(--bg-sub) !important;
+        color: var(--fg-main) !important;
+        padding: 12px 16px !important;
+    }
+
+    #changelist-filter li.selected {
+        border-right: 4px solid var(--primary) !important;
+        background: var(--bg-sub) !important;
+    }
+
+    #changelist-filter a {
+        color: var(--fg-muted) !important;
+    }
+
+</style>
+{% endblock %}

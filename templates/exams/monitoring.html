@@ -52,7 +52,13 @@
                         <button type="submit" class="btn btn-sm btn-danger">إنهاء الجلسة</button>
                     </form>
                     {% endif %}
-                    <button class="btn btn-sm btn-outline-primary" onclick="openMonitorChat({{ attempt.id }}, '{{ attempt.student.get_full_name }}')">
+                    <button class="btn btn-sm btn-outline-success" onclick="openLiveAnswers('{{ attempt.id }}', '{{ attempt.student.get_full_name|escapejs }}')" title="مشاهدة الإجابات الحية">
+                        <i class="bi bi-list-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="openSnapshotGallery('{{ attempt.id }}', '{{ attempt.student.get_full_name|escapejs }}')">
+                        <i class="bi bi-camera-fill"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="openMonitorChat('{{ attempt.id }}', '{{ attempt.student.get_full_name|escapejs }}')">
                         <i class="bi bi-chat-fill"></i>
                     </button>
                     <a href="{% url 'exam_result' attempt.pk %}" class="btn btn-sm btn-ghost"><i class="bi bi-eye"></i></a>
@@ -69,21 +75,74 @@
     {% endfor %}
 </div>
 
+<!-- Live Answers Modal -->
+<div class="modal fade" id="liveAnswersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-success text-white p-3 border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-list-check me-2"></i>إجابات الطالب الحية: <span id="liveStudentName"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="liveAnswersLoading" class="text-center py-5">
+                    <div class="spinner-border text-success"></div>
+                    <p class="mt-2 text-muted">جاري تحميل الإجابات...</p>
+                </div>
+                <div class="table-responsive" style="max-height: 600px;">
+                    <table class="table table-hover align-middle mb-0" id="liveAnswersTable" style="display:none;">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th style="width: 40%;">السؤال</th>
+                                <th style="width: 15%;">النوع</th>
+                                <th style="width: 45%;">الإجابة الحالية</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liveAnswersBody">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-3 bg-light">
+                <small class="text-muted"><i class="bi bi-info-circle me-1"></i>يتم تحديث الإجابات تلقائياً كل 10 ثوانٍ من جهاز الطالب.</small>
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Proctor Chat Modal -->
 <div class="modal fade" id="monitorChatModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius:20px; overflow:hidden;">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="chatStudentName">الدردشة</h5>
+        <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius:20px;">
+            <div class="modal-header border-0 p-4" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+                <h5 class="modal-title fw-bold text-white" id="chatStudentName">الدردشة</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-0" style="height:450px; display:flex; flex-direction:column;">
-                <div id="monitorChatBody" class="flex-grow-1 p-3 overflow-auto" style="background:#f1f5f9; display:flex; flex-direction:column; gap:10px;">
+            <div class="modal-body p-0" style="height:480px; display:flex; flex-direction:column;">
+                <div id="monitorChatBody" class="flex-grow-1 p-4 overflow-auto" style="background:#f8fafc; display:flex; flex-direction:column; gap:12px;">
                     <!-- Messages -->
                 </div>
-                <div class="p-3 border-top bg-white d-flex gap-2">
-                    <input type="text" id="monitorChatInput" class="form-control" placeholder="اكتب ردك هنا..." onkeypress="if(event.key==='Enter') sendMonitorChat()">
-                    <button class="btn btn-primary px-4" onclick="sendMonitorChat()"><i class="bi bi-send"></i></button>
+                <div class="p-3 border-top bg-white d-flex gap-2 align-items-center">
+                    <input type="text" id="monitorChatInput" class="form-control rounded-pill px-3 border-light-subtle" placeholder="اكتب ردك هنا..." onkeypress="if(event.key==='Enter') sendMonitorChat()" style="background: #f1f5f9; border: none; font-size: 0.9rem; padding: 10px 18px;">
+                    <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" onclick="sendMonitorChat()" style="width: 44px; height: 44px; background: #6366f1; border: none;"><i class="bi bi-send-fill"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Snapshot Gallery Modal -->
+<div class="modal fade" id="snapshotModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-info text-white p-3 border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-camera-fill me-2"></i>لقطات المراقبة: <span id="snapshotStudentName"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="snapshotGallery" class="row g-3">
+                    <!-- Snapshots -->
                 </div>
             </div>
         </div>
@@ -91,10 +150,31 @@
 </div>
 
 <style>
-    .chat-bubble { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 0.95rem; }
-    .chat-bubble.me { align-self: flex-end; background: var(--main); color: white; border-bottom-right-radius: 2px; }
-    .chat-bubble.other { align-self: flex-start; background: white; color: #334155; border: 1px solid #e2e8f0; border-bottom-left-radius: 2px; }
-    .chat-time { font-size: 0.75rem; opacity: 0.7; display: block; margin-top: 4px; }
+    .chat-bubble { 
+        max-width: 80%; padding: 12px 18px; border-radius: 18px; 
+        font-size: 0.9rem; line-height: 1.5; position: relative;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+    }
+    /* Proctor messages (Me) - Align Right in RTL */
+    .chat-bubble.me { 
+        align-self: flex-start; 
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); 
+        color: white; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.1);
+    }
+    /* Student messages (Other) - Align Left in RTL */
+    .chat-bubble.other { 
+        align-self: flex-end; 
+        background: white; color: #1e293b; 
+        border: 1px solid #e2e8f0; border-bottom-right-radius: 4px; 
+    }
+    .chat-time { font-size: 0.65rem; opacity: 0.8; display: block; margin-top: 6px; }
+    .chat-bubble.me .chat-time { color: rgba(255,255,255,0.9); }
+    .chat-bubble.other .chat-time { color: #64748b; }
+    
+    .live-ans-text { 
+        max-height: 100px; overflow-y: auto; font-size: 0.85rem; 
+        white-space: pre-wrap; background: #f8fafc; padding: 8px; border-radius: 8px;
+    }
 </style>
 
 {% endblock %}
@@ -118,6 +198,58 @@ document.querySelectorAll('.monitor-timer').forEach(el => {
         if (remaining < 600) el.classList.add('text-warning');
     }, 1000);
 });
+
+// ── Live Answers Logic ─────────────────────────────────────────────
+let liveInterval = null;
+let currentLiveAttemptId = null;
+
+async function openLiveAnswers(attemptId, studentName) {
+    currentLiveAttemptId = attemptId;
+    document.getElementById('liveStudentName').textContent = studentName;
+    const modal = new bootstrap.Modal(document.getElementById('liveAnswersModal'));
+    modal.show();
+
+    // Initial load
+    fetchLiveAnswers();
+
+    // Set interval
+    if (liveInterval) clearInterval(liveInterval);
+    liveInterval = setInterval(fetchLiveAnswers, 10000);
+}
+
+document.getElementById('liveAnswersModal').addEventListener('hidden.bs.modal', () => {
+    if (liveInterval) clearInterval(liveInterval);
+    currentLiveAttemptId = null;
+});
+
+async function fetchLiveAnswers() {
+    if (!currentLiveAttemptId) return;
+    const loading = document.getElementById('liveAnswersLoading');
+    const table = document.getElementById('liveAnswersTable');
+    const body = document.getElementById('liveAnswersBody');
+
+    try {
+        const res = await fetch(`/attempts/${currentLiveAttemptId}/live-answers/`);
+        const data = await res.json();
+        
+        loading.style.display = 'none';
+        table.style.display = 'table';
+
+        body.innerHTML = data.questions.map(q => `
+            <tr>
+                <td><div class="small fw-bold">${q.text}</div></td>
+                <td><span class="badge bg-light text-dark border">${q.type}</span></td>
+                <td>
+                    <div class="live-ans-text ${q.is_answered ? 'text-primary' : 'text-muted italic'}">
+                        ${q.answer}
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error("Fetch live answers error:", err);
+    }
+}
 
 // ── Proctor Chat Logic ─────────────────────────────────────────────
 let currentChatAttemptId = null;
@@ -183,6 +315,38 @@ async function sendMonitorChat() {
         });
         if (res.ok) loadMonitorChat();
     } catch (err) { console.error("Monitor chat send error", err); }
+}
+
+async function openSnapshotGallery(attemptId, studentName) {
+    document.getElementById('snapshotStudentName').textContent = studentName;
+    const gallery = document.getElementById('snapshotGallery');
+    gallery.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info"></div></div>';
+    
+    const modal = new bootstrap.Modal(document.getElementById('snapshotModal'));
+    modal.show();
+
+    try {
+        const res = await fetch(`/attempts/${attemptId}/snapshots/api/`); 
+        const data = await res.json();
+        
+        if (data.snapshots.length === 0) {
+            gallery.innerHTML = '<div class="text-center py-5 text-muted">لا توجد لقطات مسجلة بعد.</div>';
+            return;
+        }
+
+        gallery.innerHTML = data.snapshots.map(s => `
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                    <img src="${s.url}" class="card-img-top" style="height:150px; object-fit:cover;" onclick="window.open('${s.url}')">
+                    <div class="card-body p-2 text-center x-small text-muted">
+                        ${s.timestamp}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (err) { 
+        gallery.innerHTML = '<div class="text-center py-5 text-danger">خطأ في تحميل اللقطات.</div>';
+    }
 }
 </script>
 {% endblock %}

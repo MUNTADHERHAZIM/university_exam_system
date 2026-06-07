@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}قائمة الهيئة التدريسية{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 text-gray-800">قائمة الهيئة التدريسية والمراقبين</h1>
+    <div>
+        <a href="{% url 'generate_single_account' %}" class="btn btn-primary shadow-sm badge-gold text-dark">
+            <i class="bi bi-person-plus-fill me-1"></i> إضافة مشرف جديد
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card-panel h-100 p-3">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0 bg-primary bg-opacity-10 p-3 rounded">
+                    <i class="bi bi-people text-primary fs-3"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h6 class="text-muted mb-1">إجمالي الهيئة (بعد الفلترة)</h6>
+                    <h3 class="mb-0">{{ total }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card-panel h-100 p-3">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0 bg-info bg-opacity-10 p-3 rounded">
+                    <i class="bi bi-person-badge text-info fs-3"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h6 class="text-muted mb-1">إجمالي الأساتذة الكلي</h6>
+                    <h3 class="mb-0">{{ total_all }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-panel mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end" id="filterForm">
+            <div class="col-md-3">
+                <label class="form-label text-muted small">الكلية</label>
+                <select name="college" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                    <option value="">الكل</option>
+                    {% for c in colleges %}
+                    <option value="{{ c.id }}" {% if selected_college == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-muted small">القسم</label>
+                <select name="department" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                    <option value="">الكل</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}" {% if selected_dept == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-muted small">بحث (الاسم، المستخدم)</label>
+                <input type="text" name="q" class="form-control" placeholder="بحث..." value="{{ search_q }}">
+            </div>
+            <div class="col-md-2 text-md-end">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-search"></i> تصفية
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-panel">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-3 border-0">المشرف</th>
+                        <th class="border-0">اسم المستخدم</th>
+                        <th class="border-0">الدور</th>
+                        <th class="border-0">الكلية المعين بها</th>
+                        <th class="border-0">القسم / التخصص</th>
+                        <th class="border-0">بيانات التواصل</th>
+                        <th class="text-end pe-3 border-0">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    {% for p in instructors %}
+                    <tr>
+                        <td class="ps-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-0">{{ p.get_full_name|default:"غير محدد" }}</h6>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">{{ p.username }}</span></td>
+                        <td>
+                            {% if p.profile.role == 'admin' %}
+                                <span class="badge bg-primary">أستاذ / رئيس قسم</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">مراقب / مصحح</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ p.profile.get_college_name|default:"-" }}</td>
+                        <td class="text-muted small">{{ p.profile.get_department_name|default:"-" }}</td>
+                        <td class="text-muted small">
+                            {% if p.email %}<div title="البريد"><i class="bi bi-envelope me-1"></i>{{ p.email }}</div>{% endif %}
+                            {% if p.profile.phone %}<div title="الهاتف"><i class="bi bi-telephone me-1"></i>{{ p.profile.phone }}</div>{% endif %}
+                            {% if not p.email and not p.profile.phone %}-{% endif %}
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="d-flex justify-content-end gap-1">
+                                <a href="{% url 'edit_account' p.pk %}?next=instructors_list" class="btn btn-sm btn-outline-primary rounded-pill px-2" title="تعديل البيانات">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <form method="post" action="{% url 'reset_account_password' p.pk %}" style="display:inline" onsubmit="return confirm('هل أنت متأكد من إعادة تعيين كلمة مرور هذا المشرف؟')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="instructors_list">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2" title="إعادة تعيين كلمة المرور"><i class="bi bi-key"></i></button>
+                                </form>
+                                <form method="post" action="{% url 'delete_account' p.pk %}" style="display:inline" onsubmit="return confirm('هل أنت متأكد من حذف الحساب والصلاحيات بالكامل؟')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="instructors_list">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="حذف الحساب"><i class="bi bi-trash3"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-person-x fs-1 d-block mb-3"></i>
+                            لا يوجد مشرفين أو أساتذة مسجلين يطابقون هذه الفلترة.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

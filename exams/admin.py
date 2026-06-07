@@ -48,8 +48,10 @@ class ExamAdmin(admin.ModelAdmin):
     inlines = [QuestionInline]
 
 
+from import_export.admin import ImportExportModelAdmin
+
 @admin.register(Question)
-class QuestionAdmin(admin.ModelAdmin):
+class QuestionAdmin(ImportExportModelAdmin):
     list_display = ['text_preview', 'question_type', 'exam', 'marks', 'order']
     list_filter = ['question_type', 'exam']
     inlines = [QuestionOptionInline, QuestionBlankInline, MatchingPairInline, OrderingItemInline]

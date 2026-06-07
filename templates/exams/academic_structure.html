@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% block title %}الهيكل الأكاديمي{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="page-title"><i class="bi bi-building me-2"></i>الهيكل الأكاديمي</h1>
+        <p class="page-sub">إدارة الكليات والأقسام والمواد الدراسية</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-4 col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-gold"><i class="bi bi-building"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_colleges }}</div>
+                <div class="stat-label">الكليات</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue"><i class="bi bi-diagram-3-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_departments }}</div>
+                <div class="stat-label">الأقسام</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-green"><i class="bi bi-book-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_courses }}</div>
+                <div class="stat-label">المواد الدراسية</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- ─── Colleges & Departments Column ─────────────────────────────── -->
+    <div class="col-lg-6">
+        <!-- Add College -->
+        <div class="card-panel mb-4">
+            <div class="panel-header">
+                <h5 class="panel-title"><i class="bi bi-building me-2 text-warning"></i>الكليات والأقسام</h5>
+                <button class="btn btn-gold btn-sm" data-bs-toggle="modal" data-bs-target="#addCollegeModal">
+                    <i class="bi bi-plus-lg me-1"></i> إضافة كلية
+                </button>
+            </div>
+            <div class="panel-body p-0">
+                {% for college in colleges %}
+                <div class="border-bottom">
+                    <!-- College Header -->
+                    <div class="d-flex justify-content-between align-items-center p-3" style="background: rgba(201,162,39,0.05)">
+                        <div>
+                            <h6 class="mb-0 fw-bold">
+                                <i class="bi bi-building me-1 text-warning"></i> {{ college.name }}
+                                {% if college.code %}<span class="text-muted small">({{ college.code }})</span>{% endif %}
+                            </h6>
+                            <small class="text-muted">{{ college.get_departments_count }} قسم • {{ college.get_students_count }} طالب</small>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-2" data-bs-toggle="modal" data-bs-target="#addDeptModal" onclick="document.getElementById('deptCollegeId').value='{{ college.id }}'">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-2" data-bs-toggle="modal" data-bs-target="#editCollegeModal{{ college.pk }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="post" action="{% url 'delete_college' college.pk %}" style="display:inline" onsubmit="return confirm('هل أنت متأكد؟ سيتم حذف جميع الأقسام التابعة!')">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-2"><i class="bi bi-trash3"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- Departments -->
+                    {% for dept in college.departments.all %}
+                    <div class="d-flex justify-content-between align-items-center px-4 py-2 border-top" style="background: rgba(255,255,255,0.02)">
+                        <div>
+                            <span class="text-muted me-1">├─</span>
+                            <span class="fw-bold small">{{ dept.name }}</span>
+                            {% if dept.code %}<span class="text-muted x-small">({{ dept.code }})</span>{% endif %}
+                            <span class="badge bg-secondary rounded-pill ms-1" style="font-size:0.65rem">{{ dept.get_students_count }} طالب</span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0" data-bs-toggle="modal" data-bs-target="#editDeptModal{{ dept.pk }}">
+                                <i class="bi bi-pencil" style="font-size:0.7rem"></i>
+                            </button>
+                            <form method="post" action="{% url 'delete_department' dept.pk %}" style="display:inline" onsubmit="return confirm('حذف القسم وجميع المواد التابعة؟')">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0"><i class="bi bi-trash3" style="font-size:0.7rem"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- Edit Department Modal -->
+                    <div class="modal fade" id="editDeptModal{{ dept.pk }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 rounded-4 shadow-lg">
+                                <form method="post" action="{% url 'edit_department' dept.pk %}">
+                                    {% csrf_token %}
+                                    <div class="modal-header border-0"><h5 class="modal-title fw-bold">تعديل القسم</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                    <div class="modal-body">
+                                        <div class="mb-3"><label class="form-label fw-bold small">اسم القسم</label><input type="text" name="name" value="{{ dept.name }}" class="form-control" required></div>
+                                        <div class="mb-3"><label class="form-label fw-bold small">الرمز</label><input type="text" name="code" value="{{ dept.code }}" class="form-control"></div>
+                                        <input type="hidden" name="college" value="{{ dept.college_id }}">
+                                    </div>
+                                    <div class="modal-footer border-0"><button type="submit" class="btn btn-primary rounded-pill px-4">حفظ</button></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="px-4 py-2 text-muted small border-top"><i class="bi bi-info-circle me-1"></i>لا توجد أقسام</div>
+                    {% endfor %}
+                </div>
+                <!-- Edit College Modal -->
+                <div class="modal fade" id="editCollegeModal{{ college.pk }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 rounded-4 shadow-lg">
+                            <form method="post" action="{% url 'edit_college' college.pk %}">
+                                {% csrf_token %}
+                                <div class="modal-header border-0"><h5 class="modal-title fw-bold">تعديل الكلية</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <div class="mb-3"><label class="form-label fw-bold small">اسم الكلية</label><input type="text" name="name" value="{{ college.name }}" class="form-control" required></div>
+                                    <div class="mb-3"><label class="form-label fw-bold small">الرمز</label><input type="text" name="code" value="{{ college.code }}" class="form-control"></div>
+                                </div>
+                                <div class="modal-footer border-0"><button type="submit" class="btn btn-primary rounded-pill px-4">حفظ</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-building fs-1 d-block mb-2"></i>
+                    لا توجد كليات. ابدأ بإضافة كلية!
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Courses Column ────────────────────────────────────────────── -->
+    <div class="col-lg-6">
+        <div class="card-panel">
+            <div class="panel-header">
+                <h5 class="panel-title"><i class="bi bi-book-fill me-2 text-warning"></i>المواد الدراسية</h5>
+                <button class="btn btn-gold btn-sm" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                    <i class="bi bi-plus-lg me-1"></i> إضافة مادة
+                </button>
+            </div>
+            <div class="panel-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size:0.85rem">
+                        <thead>
+                            <tr>
+                                <th>المادة</th>
+                                <th>الرمز</th>
+                                <th>القسم / الكلية</th>
+                                <th>المستوى</th>
+                                <th>الأستاذ</th>
+                                <th class="text-end">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            <tr>
+                                <td class="fw-bold">{{ course.name }}</td>
+                                <td><span class="badge badge-gold">{{ course.code|default:"-" }}</span></td>
+                                <td class="small text-muted">{{ course.department.name }}<br><span class="x-small">{{ course.department.college.name }}</span></td>
+                                <td>{% if course.level %}المستوى {{ course.level }}{% else %}-{% endif %}</td>
+                                <td class="small">{{ course.instructor.get_full_name|default:"-" }}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-2" data-bs-toggle="modal" data-bs-target="#editCourseModal{{ course.pk }}"><i class="bi bi-pencil" style="font-size:0.7rem"></i></button>
+                                    <form method="post" action="{% url 'delete_course' course.pk %}" style="display:inline" onsubmit="return confirm('حذف المادة؟')">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-2"><i class="bi bi-trash3" style="font-size:0.7rem"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <!-- Edit Course Modal -->
+                            <div class="modal fade" id="editCourseModal{{ course.pk }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 rounded-4 shadow-lg">
+                                        <form method="post" action="{% url 'edit_course' course.pk %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header border-0"><h5 class="modal-title fw-bold">تعديل المادة</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                            <div class="modal-body">
+                                                <div class="mb-3"><label class="form-label fw-bold small">اسم المادة</label><input type="text" name="name" value="{{ course.name }}" class="form-control" required></div>
+                                                <div class="mb-3"><label class="form-label fw-bold small">الرمز</label><input type="text" name="code" value="{{ course.code }}" class="form-control"></div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold small">القسم</label>
+                                                    <select name="department" class="form-select" required>
+                                                        {% for college in colleges %}
+                                                        <optgroup label="{{ college.name }}">
+                                                            {% for dept in college.departments.all %}
+                                                            <option value="{{ dept.id }}" {% if dept.id == course.department_id %}selected{% endif %}>{{ dept.name }}</option>
+                                                            {% endfor %}
+                                                        </optgroup>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold small">المستوى</label>
+                                                    <select name="level" class="form-select">
+                                                        <option value="">--</option>
+                                                        <option value="1" {% if course.level == 1 %}selected{% endif %}>المستوى الأول</option>
+                                                        <option value="2" {% if course.level == 2 %}selected{% endif %}>المستوى الثاني</option>
+                                                        <option value="3" {% if course.level == 3 %}selected{% endif %}>المستوى الثالث</option>
+                                                        <option value="4" {% if course.level == 4 %}selected{% endif %}>المستوى الرابع</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold small">الفصل الدراسي</label>
+                                                    <select name="semester" class="form-select">
+                                                        <option value="">--</option>
+                                                        <option value="first" {% if course.semester == 'first' %}selected{% endif %}>الفصل الأول</option>
+                                                        <option value="second" {% if course.semester == 'second' %}selected{% endif %}>الفصل الثاني</option>
+                                                        <option value="summer" {% if course.semester == 'summer' %}selected{% endif %}>الفصل الصيفي</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-0"><button type="submit" class="btn btn-primary rounded-pill px-4">حفظ</button></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-book fs-1 d-block mb-2"></i>
+                                لا توجد مواد. أضف مادة!
+                            </td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add College Modal -->
+<div class="modal fade" id="addCollegeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form method="post" action="{% url 'add_college' %}">
+                {% csrf_token %}
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold"><i class="bi bi-building me-2 text-warning"></i>إضافة كلية جديدة</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label fw-bold small">اسم الكلية <span class="text-danger">*</span></label><input type="text" name="name" class="form-control" required placeholder="كلية الهندسة"></div>
+                    <div class="mb-3"><label class="form-label fw-bold small">رمز الكلية</label><input type="text" name="code" class="form-control" placeholder="ENG"></div>
+                </div>
+                <div class="modal-footer border-0"><button type="submit" class="btn btn-gold rounded-pill px-4">إضافة الكلية</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDeptModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form method="post" action="{% url 'add_department' %}">
+                {% csrf_token %}
+                <input type="hidden" name="college" id="deptCollegeId">
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold"><i class="bi bi-diagram-3 me-2 text-warning"></i>إضافة قسم جديد</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label fw-bold small">اسم القسم <span class="text-danger">*</span></label><input type="text" name="name" class="form-control" required placeholder="قسم علوم الحاسوب"></div>
+                    <div class="mb-3"><label class="form-label fw-bold small">رمز القسم</label><input type="text" name="code" class="form-control" placeholder="CS"></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">الكلية <span class="text-danger">*</span></label>
+                        <select name="college" class="form-select" id="deptCollegeSelect">
+                            {% for college in colleges %}
+                            <option value="{{ college.id }}">{{ college.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0"><button type="submit" class="btn btn-gold rounded-pill px-4">إضافة القسم</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Course Modal -->
+<div class="modal fade" id="addCourseModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form method="post" action="{% url 'add_course' %}">
+                {% csrf_token %}
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold"><i class="bi bi-book me-2 text-warning"></i>إضافة مادة جديدة</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label fw-bold small">اسم المادة <span class="text-danger">*</span></label><input type="text" name="name" class="form-control" required placeholder="قواعد البيانات"></div>
+                    <div class="mb-3"><label class="form-label fw-bold small">رمز المادة</label><input type="text" name="code" class="form-control" placeholder="CS301"></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">القسم <span class="text-danger">*</span></label>
+                        <select name="department" class="form-select" required>
+                            <option value="">-- اختر القسم --</option>
+                            {% for college in colleges %}
+                            <optgroup label="{{ college.name }}">
+                                {% for dept in college.departments.all %}
+                                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">المستوى</label>
+                            <select name="level" class="form-select">
+                                <option value="">--</option>
+                                <option value="1">المستوى الأول</option>
+                                <option value="2">المستوى الثاني</option>
+                                <option value="3">المستوى الثالث</option>
+                                <option value="4">المستوى الرابع</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">الفصل الدراسي</label>
+                            <select name="semester" class="form-select">
+                                <option value="">--</option>
+                                <option value="first">الفصل الأول</option>
+                                <option value="second">الفصل الثاني</option>
+                                <option value="summer">الفصل الصيفي</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0"><button type="submit" class="btn btn-gold rounded-pill px-4">إضافة المادة</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sync college selection between hidden field and select
+document.getElementById('addDeptModal')?.addEventListener('show.bs.modal', function(e) {
+    const cid = document.getElementById('deptCollegeId').value;
+    if (cid) {
+        document.getElementById('deptCollegeSelect').value = cid;
+    }
+});
+document.getElementById('deptCollegeSelect')?.addEventListener('change', function() {
+    document.getElementById('deptCollegeId').value = this.value;
+});
+</script>
+{% endblock %}

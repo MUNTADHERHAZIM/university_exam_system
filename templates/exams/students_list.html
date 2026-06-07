@@ -1,35 +1,120 @@
 {% extends 'base.html' %}
 {% block title %}الطلاب{% endblock %}
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center">
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
-        <h1 class="page-title">الطلاب</h1>
-        <p class="page-sub">{{ total }} طالب مسجل</p>
+        <h1 class="page-title"><i class="bi bi-people-fill me-2"></i>إدارة الطلاب</h1>
+        <p class="page-sub">{{ total }} طالب {% if total != total_all %}من أصل {{ total_all }}{% endif %}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'export_students_excel' %}{% if selected_college %}?college={{ selected_college }}{% endif %}{% if selected_dept %}&department={{ selected_dept }}{% endif %}" class="btn btn-outline-success btn-sm rounded-pill">
+            <i class="bi bi-file-earmark-excel me-1"></i> تصدير Excel
+        </a>
+        <a href="{% url 'account_management' %}" class="btn btn-gold btn-sm rounded-pill">
+            <i class="bi bi-person-plus me-1"></i> إنشاء حسابات
+        </a>
     </div>
 </div>
+
+<!-- Filters -->
+<div class="card-panel mb-4">
+    <div class="panel-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small text-muted fw-bold mb-1">🔍 بحث</label>
+                <input type="text" name="q" value="{{ search_q }}" class="form-control form-control-sm" placeholder="الاسم أو الرقم الجامعي...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted fw-bold mb-1">الكلية</label>
+                <select name="college" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">كل الكليات</option>
+                    {% for c in colleges %}
+                    <option value="{{ c.id }}" {% if selected_college == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted fw-bold mb-1">القسم</label>
+                <select name="department" class="form-select form-select-sm">
+                    <option value="">كل الأقسام</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}" {% if selected_dept == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted fw-bold mb-1">المستوى</label>
+                <select name="level" class="form-select form-select-sm">
+                    <option value="">الكل</option>
+                    <option value="1" {% if selected_level == 1 %}selected{% endif %}>المستوى الأول</option>
+                    <option value="2" {% if selected_level == 2 %}selected{% endif %}>المستوى الثاني</option>
+                    <option value="3" {% if selected_level == 3 %}selected{% endif %}>المستوى الثالث</option>
+                    <option value="4" {% if selected_level == 4 %}selected{% endif %}>المستوى الرابع</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-funnel"></i></button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'students_list' %}" class="btn btn-sm btn-outline-secondary w-100">إعادة ضبط</a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card-panel">
     <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
+                    <th class="ps-3">#</th>
                     <th>الاسم الكامل</th>
                     <th>اسم المستخدم</th>
-                    <th>البريد الإلكتروني</th>
                     <th>الرقم الجامعي</th>
-                    <th>التخصص</th>
+                    <th>الكلية</th>
+                    <th>القسم</th>
+                    <th>المستوى</th>
+                    <th>البريد</th>
+                    <th>الهاتف</th>
+                    <th class="text-end pe-3">إجراءات</th>
                 </tr>
             </thead>
             <tbody>
                 {% for student in students %}
                 <tr>
+                    <td class="ps-3 text-muted">{{ forloop.counter }}</td>
                     <td><div class="fw-bold">👤 {{ student.get_full_name|default:student.username }}</div></td>
-                    <td class="text-muted">{{ student.username }}</td>
-                    <td class="text-muted small">{{ student.email|default:"-" }}</td>
+                    <td><code class="text-info">{{ student.username }}</code></td>
                     <td><span class="badge badge-gold">{{ student.profile.student_id|default:"-" }}</span></td>
-                    <td class="text-muted small">{{ student.profile.department|default:"-" }}</td>
+                    <td class="text-muted small">{{ student.profile.get_college_name }}</td>
+                    <td class="text-muted small">{{ student.profile.get_department_name }}</td>
+                    <td class="text-muted small">{{ student.profile.get_level_display_safe }}</td>
+                    <td class="text-muted small">{{ student.email|default:"-" }}</td>
+                    <td class="text-muted small">{{ student.profile.phone|default:"-" }}</td>
+                    <td class="text-end pe-3">
+                        <div class="d-flex justify-content-end gap-1">
+                            <a href="{% url 'edit_account' student.pk %}?next=students_list" class="btn btn-sm btn-outline-primary rounded-pill px-2" title="تعديل البيانات">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <form method="post" action="{% url 'reset_account_password' student.pk %}" style="display:inline" onsubmit="return confirm('هل أنت متأكد من إعادة تعيين كلمة مرور الطالب {{ student.get_full_name }}؟')">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="students_list">
+                                <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2" title="إعادة تعيين كلمة المرور"><i class="bi bi-key"></i></button>
+                            </form>
+                            <form method="post" action="{% url 'delete_account' student.pk %}" style="display:inline" onsubmit="return confirm('هل أنت متأكد من حذف حساب {{ student.get_full_name }}؟')">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="students_list">
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="حذف الحساب"><i class="bi bi-trash3"></i></button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="text-center py-5 text-muted">لا يوجد طلاب مسجلون</td></tr>
+                <tr><td colspan="10" class="text-center py-5 text-muted">
+                    <i class="bi bi-people fs-1 d-block mb-2"></i>
+                    لا يوجد طلاب مسجلون
+                    {% if search_q or selected_college or selected_dept %}بحسب المعايير المحددة{% endif %}
+                </td></tr>
                 {% endfor %}
             </tbody>
         </table>

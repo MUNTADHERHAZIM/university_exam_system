@@ -1,19 +1,49 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from accounts.models import Department
+from accounts.models import Department, College
+from .security_utils import encrypt_data, decrypt_data
+import json
 
 class Course(models.Model):
+    SEMESTER_CHOICES = [
+        ('first', 'الفصل الأول'),
+        ('second', 'الفصل الثاني'),
+        ('summer', 'الفصل الصيفي'),
+    ]
+    LEVEL_CHOICES = [
+        (1, 'المستوى الأول'),
+        (2, 'المستوى الثاني'),
+        (3, 'المستوى الثالث'),
+        (4, 'المستوى الرابع'),
+    ]
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='courses', verbose_name='القسم')
     name = models.CharField(max_length=200, verbose_name='اسم المادة / المقرر')
     code = models.CharField(max_length=20, blank=True, verbose_name='رمز المادة')
+    instructor = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='taught_courses', verbose_name='الأستاذ المسؤول'
+    )
+    level = models.PositiveIntegerField(
+        choices=LEVEL_CHOICES, null=True, blank=True,
+        verbose_name='المستوى الدراسي'
+    )
+    semester = models.CharField(
+        max_length=10, choices=SEMESTER_CHOICES, blank=True,
+        verbose_name='الفصل الدراسي'
+    )
+    is_active = models.BooleanField(default=True, verbose_name='مادة فعّالة')
 
     class Meta:
         verbose_name = 'المادة'
         verbose_name_plural = 'المواد'
+        ordering = ['department__college__name', 'department__name', 'name']
 
     def __str__(self):
         return f"{self.name} ({self.code})" if self.code else self.name
+
+    def get_college(self):
+        return self.department.college if self.department else None
 
 
 class Exam(models.Model):
@@ -30,6 +60,7 @@ class Exam(models.Model):
     total_marks = models.PositiveIntegerField(default=100, verbose_name='الدرجة الكلية')
     pass_mark = models.PositiveIntegerField(default=50, verbose_name='درجة النجاح')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft', verbose_name='الحالة')
+    use_course_bank = models.BooleanField(default=False, verbose_name='استخدام بنك أسئلة المادة')
     shuffle_questions = models.BooleanField(default=False, verbose_name='ترتيب عشوائي للأسئلة')
     allow_review = models.BooleanField(default=True, verbose_name='السماح بمراجعة الأسئلة')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_exams', verbose_name='أنشئ بواسطة')
@@ -39,7 +70,15 @@ class Exam(models.Model):
     end_date = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ الانتهاء')
     max_attempts = models.PositiveIntegerField(default=1, verbose_name='أقصى عدد محاولات')
     assigned_students = models.ManyToManyField(User, related_name='assigned_exams', blank=True, verbose_name='الطلاب المخصصون')
+    assigned_colleges = models.ManyToManyField(College, related_name='assigned_exams', blank=True, verbose_name='الكليات المستهدفة')
+    assigned_departments = models.ManyToManyField(Department, related_name='assigned_exams', blank=True, verbose_name='الأقسام المستهدفة')
     random_question_count = models.PositiveIntegerField(null=True, blank=True, verbose_name='عدد الأسئلة العشوائية')
+
+    # Advanced Settings
+    is_mock = models.BooleanField(default=False, verbose_name='اختبار تجريبي (للتدريب)')
+    require_seb = models.BooleanField(default=False, verbose_name='يتطلب متصفح آمن (SEB)')
+    require_camera = models.BooleanField(default=False, verbose_name='يتطلب تحقق بالكاميرا')
+    blind_grading = models.BooleanField(default=False, verbose_name='تفعيل التصحيح الأعمى (إخفاء أسماء الطلاب)')
 
     class Meta:
         verbose_name = 'اختبار'
@@ -53,6 +92,17 @@ class Exam(models.Model):
         if self.random_question_count:
             return min(self.random_question_count, self.questions.count())
         return self.questions.count()
+
+    def get_questions_total_marks(self):
+        """Calculates the sum of marks of all questions currently in the exam."""
+        total = self.questions.aggregate(models.Sum('marks'))['marks__sum'] or 0
+        return total
+
+    def recalculate_total_marks(self):
+        """Updates the total_marks field to match the sum of question marks and saves."""
+        self.total_marks = self.get_questions_total_marks()
+        self.save(update_fields=['total_marks'])
+        return self.total_marks
 
     def is_available(self):
         if self.status != 'active':
@@ -102,12 +152,21 @@ class Question(models.Model):
         ('ordering', 'ترتيب'),
         ('code', 'سؤال برمجي'),
     ]
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions', verbose_name='الاختبار')
+    DIFFICULTY_CHOICES = [
+        ('easy', 'سهل'),
+        ('medium', 'متوسط'),
+        ('hard', 'صعب'),
+    ]
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions', null=True, blank=True, verbose_name='الاختبار')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='question_bank', null=True, blank=True, verbose_name='المادة (بنك الأسئلة)')
     question_type = models.CharField(max_length=20, choices=TYPE_CHOICES, verbose_name='نوع السؤال')
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='medium', verbose_name='مستوى الصعوبة')
     text = models.TextField(verbose_name='نص السؤال')
     marks = models.PositiveIntegerField(default=5, verbose_name='الدرجة')
     order = models.PositiveIntegerField(default=0, verbose_name='الترتيب')
     explanation = models.TextField(blank=True, verbose_name='الشرح / التغذية الراجعة')
+    image = models.ImageField(upload_to='question_images/', blank=True, null=True, verbose_name='صورة مرفقة (اختياري)')
+    learning_outcome = models.CharField(max_length=255, blank=True, verbose_name='مخرجات التعلم المستهدفة')
     
     # Code question specific
     code_language = models.CharField(max_length=20, default='python', verbose_name='لغة البرمجة')
@@ -211,7 +270,9 @@ class ExamAttempt(models.Model):
 
     def get_percentage(self):
         score = self.get_total_score()
-        return round((score / self.exam.total_marks) * 100, 1) if self.exam.total_marks else 0
+        if not self.exam.total_marks or self.exam.total_marks == 0:
+            return 0.0
+        return round((score / self.exam.total_marks) * 100, 1)
 
     def calculate_grade(self):
         pct = self.get_percentage()
@@ -235,22 +296,39 @@ class ExamAttempt(models.Model):
 
 
 class AttemptAnswer(models.Model):
-    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, related_name='answers')
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
-    # For text-based answers (short_answer, essay, fill_blank)
-    answer_text = models.TextField(blank=True, verbose_name='نص الإجابة')
-    # For MCQ (comma-separated option IDs)
-    selected_options = models.CharField(max_length=500, blank=True, verbose_name='الخيارات المحددة')
-    # For matching (JSON: {left_id: right_id, ...})
-    matching_answer = models.TextField(blank=True, verbose_name='إجابة المطابقة')
-    # For ordering (comma-separated item IDs in student order)
-    ordering_answer = models.CharField(max_length=500, blank=True, verbose_name='إجابة الترتيب')
-    # Grading
+    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, related_name='answers', verbose_name='المحاولة')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='instances', verbose_name='السؤال')
+    selected_options = models.TextField(blank=True, verbose_name='الخيارات المختارة (MCQ)')
+    answer_text = models.TextField(blank=True, verbose_name='النص (مقالي/فراغات)')
+    matching_answer = models.TextField(blank=True, verbose_name='إجابة المطابقة (JSON)')
+    ordering_answer = models.TextField(blank=True, verbose_name='إجابة الترتيب')
     earned_marks = models.FloatField(null=True, blank=True, verbose_name='الدرجة المكتسبة')
-    is_graded = models.BooleanField(default=False, verbose_name='مصحح')
-    grader_comment = models.TextField(blank=True, verbose_name='تعليق المصحح')
+    is_graded = models.BooleanField(default=False, verbose_name='تم التصحيح')
+    grader_comment = models.TextField(blank=True, verbose_name='ملاحظات المصحح')
     graded_at = models.DateTimeField(null=True, blank=True)
     graded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='graded_answers')
+
+    def save(self, *args, **kwargs):
+        # Encrypt sensitive fields before saving
+        if self.answer_text and not self.answer_text.startswith('gAAAA'):
+            self.answer_text = encrypt_data(self.answer_text)
+        if self.matching_answer and not self.matching_answer.startswith('gAAAA'):
+            self.matching_answer = encrypt_data(self.matching_answer)
+        if self.ordering_answer and not self.ordering_answer.startswith('gAAAA'):
+            self.ordering_answer = encrypt_data(self.ordering_answer)
+        super().save(*args, **kwargs)
+
+    @property
+    def decrypted_text(self):
+        return decrypt_data(self.answer_text)
+
+    @property
+    def decrypted_matching(self):
+        return decrypt_data(self.matching_answer)
+
+    @property
+    def decrypted_ordering(self):
+        return decrypt_data(self.ordering_answer)
 
     class Meta:
         verbose_name = 'إجابة'
@@ -278,6 +356,17 @@ class ViolationLog(models.Model):
     class Meta:
         verbose_name = 'مخالفة'
         verbose_name_plural = 'المخالفات'
+        ordering = ['-timestamp']
+
+
+class ProctorSnapshot(models.Model):
+    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, related_name='snapshots')
+    image = models.ImageField(upload_to='proctor_snapshots/%Y/%m/%d/')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'لقطة شاشة مراقبة'
+        verbose_name_plural = 'لقطات شاشة المراقبة'
         ordering = ['-timestamp']
 
 
@@ -364,3 +453,20 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.subject}"
+
+
+class GradeAuditLog(models.Model):
+    attempt = models.ForeignKey('ExamAttempt', on_delete=models.CASCADE, related_name='grade_audit_logs', verbose_name='المحاولة')
+    question = models.ForeignKey('Question', on_delete=models.CASCADE, related_name='grade_audit_logs', verbose_name='السؤال')
+    old_mark = models.FloatField(null=True, blank=True, verbose_name='الدرجة السابقة')
+    new_mark = models.FloatField(verbose_name='الدرجة الجديدة')
+    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='المُعدِّل')
+    modified_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ التعديل')
+
+    class Meta:
+        verbose_name = 'سجل تعديل درجة'
+        verbose_name_plural = 'سجلات تعديل الدرجات'
+        ordering = ['-modified_at']
+
+    def __str__(self):
+        return f"تعديل بواسطة {self.modified_by} - Q{self.question.id}"

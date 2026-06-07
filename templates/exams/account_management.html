@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+{% block title %}إدارة الحسابات{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="page-title"><i class="bi bi-person-vcard me-2"></i>إدارة الحسابات</h1>
+        <p class="page-sub">إنشاء وإدارة حسابات الطلاب والأساتذة</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'download_bulk_template' %}" class="btn btn-outline-info btn-sm rounded-pill">
+            <i class="bi bi-download me-1"></i> تحميل قالب Excel
+        </a>
+        <a href="{% url 'export_accounts_excel' %}{% if batch_filter %}?batch={{ batch_filter }}{% endif %}" class="btn btn-outline-success btn-sm rounded-pill">
+            <i class="bi bi-file-earmark-excel me-1"></i> تصدير Excel
+        </a>
+        <a href="{% url 'print_account_cards' %}{% if batch_filter %}?batch={{ batch_filter }}{% endif %}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill">
+            <i class="bi bi-printer me-1"></i> طباعة البطاقات
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-gold"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_generated }}</div>
+                <div class="stat-label">إجمالي الحسابات المولّدة</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue"><i class="bi bi-mortarboard-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_students_gen }}</div>
+                <div class="stat-label">حسابات طلاب</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-green"><i class="bi bi-person-workspace"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_admins_gen }}</div>
+                <div class="stat-label">حسابات أساتذة</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-orange"><i class="bi bi-person-badge-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_assistants_gen }}</div>
+                <div class="stat-label">حسابات مراقبين</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-pills mb-4 gap-2" id="accountTabs" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#singleTab">
+            <i class="bi bi-person-plus me-1"></i> إنشاء فردي
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#bulkTab">
+            <i class="bi bi-people me-1"></i> إنشاء بالجملة
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#listTab">
+            <i class="bi bi-list-ul me-1"></i> الحسابات المنشأة
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- ─── Single Account Tab ────────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="singleTab">
+        <div class="card-panel">
+            <div class="panel-header">
+                <h5 class="panel-title"><i class="bi bi-person-plus-fill me-2 text-warning"></i>إنشاء حساب جديد</h5>
+            </div>
+            <div class="panel-body">
+                <form method="post" action="{% url 'generate_single_account' %}">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">الدور <span class="text-danger">*</span></label>
+                            <select name="role" class="form-select" id="singleRole">
+                                <option value="student">طالب</option>
+                                <option value="admin">أستاذ</option>
+                                <option value="assistant">مراقب / مصحح</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">الكلية</label>
+                            <select name="college" class="form-select" id="singleCollege" onchange="loadDepartments(this.value, 'singleDept')">
+                                <option value="">-- اختر الكلية --</option>
+                                {% for c in colleges %}
+                                <option value="{{ c.id }}">{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">القسم</label>
+                            <select name="department" class="form-select" id="singleDept">
+                                <option value="">-- اختر القسم --</option>
+                                {% for d in departments %}
+                                <option value="{{ d.id }}">{{ d.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">الاسم الأول <span class="text-danger">*</span></label>
+                            <input type="text" name="first_name" class="form-control" required placeholder="أحمد">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">الاسم الأخير <span class="text-danger">*</span></label>
+                            <input type="text" name="last_name" class="form-control" required placeholder="محمد">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">البريد الإلكتروني</label>
+                            <input type="email" name="email" class="form-control" placeholder="example@university.edu">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted">الرقم الجامعي</label>
+                            <input type="text" name="student_id" class="form-control" placeholder="STD001">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted">المستوى الدراسي</label>
+                            <select name="level" class="form-select">
+                                <option value="">--</option>
+                                <option value="1">المستوى الأول</option>
+                                <option value="2">المستوى الثاني</option>
+                                <option value="3">المستوى الثالث</option>
+                                <option value="4">المستوى الرابع</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted">رقم الهاتف</label>
+                            <input type="text" name="phone" class="form-control" placeholder="07xxxxxxxxx">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-gold w-100 py-2">
+                                <i class="bi bi-person-plus-fill me-1"></i> إنشاء الحساب
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Bulk Account Tab ──────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="bulkTab">
+        <div class="card-panel">
+            <div class="panel-header">
+                <h5 class="panel-title"><i class="bi bi-cloud-upload-fill me-2 text-warning"></i>إنشاء حسابات بالجملة</h5>
+                <a href="{% url 'download_bulk_template' %}" class="btn btn-outline-info btn-sm">
+                    <i class="bi bi-download me-1"></i> تحميل القالب
+                </a>
+            </div>
+            <div class="panel-body">
+                <form method="post" action="{% url 'generate_bulk_accounts' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">ملف Excel <span class="text-danger">*</span></label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+                            <div class="form-text">الأعمدة: الاسم الأول | الاسم الأخير | البريد | الرقم الجامعي | الهاتف</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">الدور <span class="text-danger">*</span></label>
+                            <select name="role" class="form-select">
+                                <option value="student">طالب</option>
+                                <option value="admin">أستاذ</option>
+                                <option value="assistant">مراقب / مصحح</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">الكلية</label>
+                            <select name="college" class="form-select" onchange="loadDepartments(this.value, 'bulkDept')">
+                                <option value="">-- اختر الكلية --</option>
+                                {% for c in colleges %}
+                                <option value="{{ c.id }}">{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">القسم</label>
+                            <select name="department" class="form-select" id="bulkDept">
+                                <option value="">-- اختر القسم --</option>
+                                {% for d in departments %}
+                                <option value="{{ d.id }}">{{ d.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">المستوى الدراسي</label>
+                            <select name="level" class="form-select">
+                                <option value="">-- الكل --</option>
+                                <option value="1">المستوى الأول</option>
+                                <option value="2">المستوى الثاني</option>
+                                <option value="3">المستوى الثالث</option>
+                                <option value="4">المستوى الرابع</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-gold px-5 py-2">
+                                <i class="bi bi-cloud-upload me-1"></i> رفع وإنشاء الحسابات
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Generated Accounts List Tab ───────────────────────────────── -->
+    <div class="tab-pane fade" id="listTab">
+        <div class="card-panel">
+            <div class="panel-header flex-wrap gap-2">
+                <h5 class="panel-title"><i class="bi bi-list-check me-2 text-warning"></i>الحسابات المنشأة</h5>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{% url 'export_accounts_excel' %}{% if batch_filter %}?batch={{ batch_filter }}{% endif %}" class="btn btn-sm btn-outline-success rounded-pill">
+                        <i class="bi bi-file-earmark-excel me-1"></i> تصدير
+                    </a>
+                    <a href="{% url 'print_account_cards' %}{% if batch_filter %}?batch={{ batch_filter }}{% endif %}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill">
+                        <i class="bi bi-printer me-1"></i> طباعة
+                    </a>
+                </div>
+            </div>
+            <!-- Filters -->
+            <div class="px-3 py-2 border-bottom" style="background: rgba(255,255,255,0.02)">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-2">
+                        <input type="text" name="q" value="{{ search_q }}" class="form-control form-control-sm" placeholder="🔍 بحث...">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="role" class="form-select form-select-sm">
+                            <option value="">كل الأدوار</option>
+                            <option value="student" {% if role_filter == 'student' %}selected{% endif %}>طالب</option>
+                            <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>أستاذ</option>
+                            <option value="assistant" {% if role_filter == 'assistant' %}selected{% endif %}>مراقب</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="college" class="form-select form-select-sm">
+                            <option value="">كل الكليات</option>
+                            {% for c in colleges %}
+                            <option value="{{ c.id }}" {% if college_filter == c.id %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="batch" class="form-select form-select-sm">
+                            <option value="">كل الدفعات</option>
+                            {% for b in batches %}
+                            <option value="{{ b }}" {% if batch_filter == b %}selected{% endif %}>{{ b }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-funnel me-1"></i>تصفية</button>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'account_management' %}" class="btn btn-sm btn-outline-secondary w-100">إعادة ضبط</a>
+                    </div>
+                </form>
+            </div>
+            <div class="panel-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                        <thead>
+                            <tr>
+                                <th class="ps-3">#</th>
+                                <th>الاسم الكامل</th>
+                                <th>اسم المستخدم</th>
+                                <th>كلمة المرور</th>
+                                <th>الدور</th>
+                                <th>الكلية</th>
+                                <th>القسم</th>
+                                <th>الرقم الجامعي</th>
+                                <th>المستوى</th>
+                                <th class="text-end pe-3">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for acc in generated_accounts %}
+                            <tr>
+                                <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+                                <td class="fw-bold">{{ acc.user.get_full_name }}</td>
+                                <td><code class="text-info">{{ acc.user.username }}</code></td>
+                                <td>
+                                    {% if acc.generated_password %}
+                                    <span class="badge bg-dark border border-secondary password-badge" onclick="this.textContent='{{ acc.generated_password }}'" style="cursor:pointer" title="انقر للكشف">
+                                        ●●●●●●
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge {% if acc.role == 'admin' %}bg-success{% elif acc.role == 'assistant' %}bg-info{% else %}bg-primary{% endif %} rounded-pill">
+                                        {{ acc.get_role_display }}
+                                    </span>
+                                </td>
+                                <td class="text-muted small">{{ acc.get_college_name }}</td>
+                                <td class="text-muted small">{{ acc.get_department_name }}</td>
+                                <td><span class="badge badge-gold">{{ acc.student_id|default:"-" }}</span></td>
+                                <td class="text-muted">{{ acc.get_level_display_safe }}</td>
+                                <td class="text-end pe-3">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a href="{% url 'edit_account' acc.user.pk %}?next=account_management" class="btn btn-sm btn-outline-primary rounded-pill px-2" title="تعديل البيانات">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <form method="post" action="{% url 'reset_account_password' acc.user.pk %}" style="display:inline" onsubmit="return confirm('هل أنت متأكد من إعادة تعيين كلمة مرور الحساب؟')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="account_management">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2" title="إعادة تعيين كلمة المرور"><i class="bi bi-key"></i></button>
+                                        </form>
+                                        <form method="post" action="{% url 'delete_account' acc.user.pk %}" style="display:inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا الحساب؟')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="account_management">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="حذف الحساب"><i class="bi bi-trash3"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="10" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                لا توجد حسابات مولّدة بعد
+                            </td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadDepartments(collegeId, targetId) {
+    const target = document.getElementById(targetId);
+    target.innerHTML = '<option value="">-- جاري التحميل... --</option>';
+    
+    if (!collegeId) {
+        target.innerHTML = '<option value="">-- اختر القسم --</option>';
+        return;
+    }
+    
+    fetch(`{% url 'api_departments_by_college' %}?college_id=${collegeId}`)
+        .then(r => r.json())
+        .then(data => {
+            target.innerHTML = '<option value="">-- اختر القسم --</option>';
+            data.departments.forEach(d => {
+                target.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+            });
+        });
+}
+
+// Auto-switch to list tab if there's a filter
+{% if search_q or role_filter or college_filter or batch_filter %}
+document.addEventListener('DOMContentLoaded', function() {
+    new bootstrap.Tab(document.querySelector('[data-bs-target="#listTab"]')).show();
+});
+{% endif %}
+</script>
+{% endblock %}

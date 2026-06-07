@@ -5,19 +5,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-university-exam-system-change-in-production-2026'
 
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = True 
 
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'crispy_forms',
     'crispy_bootstrap5',
+    'import_export',
     'accounts',
     'exams',
 ]
@@ -53,6 +56,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'university_exam.wsgi.application'
+ASGI_APPLICATION = 'university_exam.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 DATABASES = {
     'default': {
@@ -73,7 +83,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

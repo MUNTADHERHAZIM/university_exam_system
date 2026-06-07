@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}استيراد أسئلة من Excel - {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">استيراد أسئلة من ملف Excel</h5>
+                    <a href="{% url 'exam_edit' exam.pk %}" class="btn btn-sm btn-light">العودة للاختبار</a>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6>تعليمات الاستيراد:</h6>
+                        <ul class="mb-0">
+                            <li>يجب أن يحتوي الملف على الأعمدة التالية بالترتيب:</li>
+                            <li>A: نوع السؤال (mcq_single, true_false, short_answer)</li>
+                            <li>B: نص السؤال</li>
+                            <li>C: درجة السؤال (رقم)</li>
+                            <li>D, E, F, G: الخيارات 1 إلى 4 (في حال الاختيار المتعدد)</li>
+                            <li>H: رقم الإجابة الصحيحة (1 إلى 4) أو (true/false) لأسئلة الصح والخطأ</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="excel_file" class="form-label">اختر ملف Excel (.xlsx)</label>
+                            <input class="form-control" type="file" id="excel_file" name="excel_file" accept=".xlsx" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload me-2"></i> استيراد الآن
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

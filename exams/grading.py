@@ -74,14 +74,15 @@ def _grade_true_false(answer: AttemptAnswer, question: Question) -> float:
     if not answer.answer_text:
         return 0.0
     student_answer = answer.answer_text.strip().lower()
-    correct_answer = str(question.tf_answer).lower()  # 'true' or 'false'
-    # Accept arabic too
-    if student_answer in ['true', 'صحيح', 'صح', '1']:
+    
+    # Standardize student answers (English & Arabic)
+    if student_answer in ['true', 'صحيح', 'صح', '1', 'نعم', 'yes']:
         student_bool = True
-    elif student_answer in ['false', 'خطأ', 'خطا', '0']:
+    elif student_answer in ['false', 'خطأ', 'خطا', '0', 'لا', 'no']:
         student_bool = False
     else:
         return 0.0
+        
     return float(question.marks) if (student_bool == question.tf_answer) else 0.0
 
 
@@ -115,23 +116,14 @@ def _grade_matching(answer: AttemptAnswer, question: Question) -> float:
     if not pairs.exists():
         return 0.0
 
-    correct_count = 0
-    for pair in pairs:
-        left_key = str(pair.id)
-        student_right = student_pairs.get(left_key)
-        if student_right and str(student_right) == str(pair.id):
-            correct_count += 1
-
-    # Actually matching pairs: left_id -> right_id where right_id maps to same pair
-    # Re-implement: student_pairs = {left_pair_id: right_pair_id (which pair's right they chose)}
+    # Logic: student_pairs = {left_pair_id: right_pair_id_chosen}
+    # Correct answer: left_pair_id == right_pair_id_chosen
     correct_count = 0
     for pair in pairs:
         left_key = str(pair.id)
         chosen_right_id = student_pairs.get(left_key)
-        if chosen_right_id is not None:
-            # The correct answer: same pair id
-            if str(chosen_right_id) == str(pair.id):
-                correct_count += 1
+        if chosen_right_id is not None and str(chosen_right_id) == str(pair.id):
+            correct_count += 1
 
     total = pairs.count()
     if total == 0:

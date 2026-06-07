@@ -1,131 +1,413 @@
 {% extends 'base.html' %}
-{% block title %}حول النظام - University Exam System{% endblock %}
+{% block title %}عن النظام - University Exam System{% endblock %}
+{% block extra_css %}
+<style>
+    /* Premium Light Glassmorphism Harmony */
+    :root {
+        --premium-primary: #2563eb;
+        --premium-primary-light: #eff6ff;
+        --premium-secondary: #0f172a;
+        --premium-accent: #d97706;
+        --glass-bg-light: rgba(255, 255, 255, 0.85);
+        --glass-border-light: rgba(255, 255, 255, 0.9);
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --shadow-soft: 0 20px 40px rgba(148, 163, 184, 0.15);
+    }
+
+    /* Page Setup */
+    .about-page-wrapper {
+        min-height: 100vh;
+        /* Using a very soft, elegant gradient background to complement the light theme */
+        background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.05), transparent 50%),
+                    radial-gradient(circle at bottom left, rgba(217, 119, 6, 0.05), transparent 50%);
+        padding-bottom: 5rem;
+        color: var(--text-main);
+    }
+
+    /* Premium Glass Container */
+    .premium-glass-light {
+        background: var(--glass-bg-light);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border-light);
+        border-radius: 28px;
+        box-shadow: var(--shadow-soft), inset 0 0 0 1px rgba(255,255,255,0.5);
+        overflow: hidden;
+    }
+
+    /* Hero Section */
+    .about-hero {
+        padding: 5rem 2rem 4rem;
+        text-align: center;
+        position: relative;
+    }
+    
+    .about-hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 20%; right: 20%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.15), transparent);
+    }
+
+    .hero-icon-container {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 2.5rem;
+        border-radius: 30px;
+        background: linear-gradient(135deg, var(--premium-primary), #1d4ed8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 15px 35px rgba(37, 99, 235, 0.3), inset 0 0 0 2px rgba(255,255,255,0.2);
+        transform: rotate(45deg);
+        transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        color: white;
+    }
+
+    .hero-icon-container svg {
+        transform: rotate(-45deg);
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+    }
+
+    .hero-icon-container:hover {
+        transform: rotate(0deg) scale(1.05);
+        border-radius: 50%;
+        box-shadow: 0 20px 45px rgba(37, 99, 235, 0.4);
+    }
+
+    .hero-title {
+        font-weight: 800;
+        font-size: 3.2rem;
+        color: var(--premium-secondary);
+        letter-spacing: -1.5px;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+
+    .hero-subtitle {
+        color: var(--text-muted);
+        font-size: 1.25rem;
+        max-width: 750px;
+        margin: 0 auto;
+        line-height: 1.8;
+        font-weight: 400;
+    }
+
+    /* Features Section */
+    .feature-box {
+        padding: 2.5rem;
+        border-radius: 24px;
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        height: 100%;
+        transition: all 0.4s ease;
+        box-shadow: 0 10px 25px rgba(148, 163, 184, 0.05);
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .feature-box::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(248, 250, 252, 0.8) 100%);
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .feature-box:hover::before { opacity: 1; }
+
+    .feature-box:hover {
+        transform: translateY(-8px);
+        border-color: rgba(37, 99, 235, 0.2);
+        box-shadow: 0 25px 50px rgba(148, 163, 184, 0.15);
+    }
+
+    .feature-icon {
+        width: 70px; height: 70px;
+        border-radius: 20px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 1.8rem;
+        font-size: 2rem;
+        transition: transform 0.4s ease;
+    }
+
+    .feature-box:hover .feature-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .icon-blue { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+    .icon-emerald { background: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
+    .icon-amber { background: #fffbeb; color: #d97706; border: 1px solid #fef3c7; }
+
+    .feature-title {
+        color: var(--premium-secondary);
+        font-weight: 800;
+        font-size: 1.35rem;
+        margin-bottom: 1rem;
+    }
+
+    .feature-text {
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    /* Layout Sections */
+    .section-title {
+        color: var(--premium-secondary);
+        font-weight: 800;
+        font-size: 1.8rem;
+        margin-bottom: 2.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .section-title i {
+        color: var(--premium-primary);
+        font-size: 1.5rem;
+        background: #eff6ff;
+        width: 45px; height: 45px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Premium FAQ Accordion */
+    .premium-accordion .accordion-item {
+        background: transparent;
+        border: none;
+        margin-bottom: 1.25rem;
+    }
+
+    .premium-accordion .accordion-button {
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 16px !important;
+        color: var(--premium-secondary);
+        font-weight: 700;
+        font-size: 1.1rem;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 6px rgba(148, 163, 184, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .premium-accordion .accordion-button:not(.collapsed) {
+        background: var(--premium-primary-light);
+        border-color: #bfdbfe;
+        color: var(--premium-primary);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.08);
+    }
+
+    .premium-accordion .accordion-button::after {
+        filter: invert(30%) sepia(10%) saturate(1000%) hue-rotate(180deg) brightness(50%) contrast(90%);
+        transition: transform 0.3s ease;
+    }
+    
+    .premium-accordion .accordion-button:not(.collapsed)::after {
+        filter: invert(27%) sepia(87%) saturate(2895%) hue-rotate(213deg) brightness(96%) contrast(97%); /* Primary blue */
+    }
+
+    .premium-accordion .accordion-body {
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        padding: 1.5rem 1.75rem;
+        line-height: 1.8;
+        background: #f8fafc;
+        border-radius: 0 0 16px 16px;
+        margin-top: -8px;
+        border: 1px solid rgba(226, 232, 240, 0.6);
+        border-top: none;
+    }
+
+    /* Contact Card */
+    .contact-glass {
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 20px 40px rgba(148, 163, 184, 0.08);
+    }
+
+    .contact-row {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        padding: 1.25rem 0;
+        border-bottom: 1px solid #f1f5f9;
+        transition: transform 0.3s ease;
+    }
+
+    .contact-row:last-of-type { border-bottom: none; }
+    
+    .contact-row:hover { transform: translateX(-8px); }
+
+    .c-icon {
+        width: 50px; height: 50px;
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    .c-icon.location { background: #fee2e2; color: #ef4444; }
+    .c-icon.phone { background: #dcfce7; color: #22c55e; }
+    .c-icon.email { background: #e0e7ff; color: #6366f1; }
+
+    .c-title {
+        font-weight: 700;
+        color: var(--premium-secondary);
+        margin-bottom: 0.25rem;
+        font-size: 1.05rem;
+    }
+    .c-desc {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .social-btn-premium {
+        width: 48px; height: 48px;
+        border-radius: 14px;
+        background: #f8fafc;
+        color: var(--text-muted);
+        display: flex; align-items: center; justify-content: center;
+        text-decoration: none;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        font-size: 1.35rem;
+    }
+
+    .social-btn-premium:hover {
+        background: var(--premium-primary);
+        color: #ffffff;
+        border-color: var(--premium-primary);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <!-- Hero Section -->
-    <div class="text-center mb-5 pb-3">
-        <div class="mb-4">
-            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#D4AF37" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>
-        <h1 class="display-4 fw-bold mb-3">نظام الامتحانات الجامعي المتكامل</h1>
-        <p class="lead text-muted mx-auto" style="max-width: 700px;">
-            منصة ذكية متطورة لإدارة وتأدية الاختبارات الأكاديمية بمعايير عالمية، تضمن النزاهة، السهولة، والدقة في التقييم.
-        </p>
-    </div>
+<div class="about-page-wrapper pt-4">
+    <div class="container pb-5">
+        
+        <div class="premium-glass-light mb-5">
+            <!-- Hero Section -->
+            <div class="about-hero">
+                <div class="hero-icon-container">
+                    <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h1 class="hero-title">نظام الامتحانات الجامعي المتكامل</h1>
+                <p class="hero-subtitle">
+                    منصة تعليمية ذكية وموثوقة لإدارة وتقييم الاختبارات الأكاديمية بمعايير عالمية، صُممت لتضمن النزاهة التامة وراحة الاستخدام.
+                </p>
+            </div>
 
-    <!-- Features Grid -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-4">
-            <div class="card-panel h-100 text-center p-4">
-                <div class="mb-3 text-gold fs-1">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    </svg>
-                </div>
-                <h5>حماية ونزاهة عالية</h5>
-                <p class="text-muted small">نظام مراقبة تفاعلي يكتشف محاولات الغش وتغيير التبويبات تلقائياً مع تسجيل المخالفات.</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card-panel h-100 text-center p-4">
-                <div class="mb-3 text-primary fs-1">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                        <line x1="12" y1="22.08" x2="12" y2="12"/>
-                    </svg>
-                </div>
-                <h5>هيكلية أكاديمية منظمة</h5>
-                <p class="text-muted small">تنظيم الاختبارات حسب الكليات والأقسام والمواد لسهولة الإدارة والوصول للمعلومات.</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card-panel h-100 text-center p-4">
-                <div class="mb-3 text-success fs-1">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                </div>
-                <h5>تقارير وإحصائيات</h5>
-                <p class="text-muted small">تحليل كامل لنتائج الطلاب ومستويات الأداء مع إمكانية تصدير النتائج بضغطة زر.</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-5">
-        <!-- FAQ Section -->
-        <div class="col-lg-7">
-            <h3 class="mb-4"><i class="bi bi-question-circle-fill me-2 text-warning"></i>الأسئلة الشائعة</h3>
-            <div class="accordion accordion-flush card-panel p-2" id="faqAccordion">
-                {% for faq in faqs %}
-                <div class="accordion-item border-0">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq-{{ forloop.counter }}">
-                            {{ faq.q }}
-                        </button>
-                    </h2>
-                    <div id="faq-{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body text-muted pt-0">
-                            {{ faq.a }}
+            <!-- Features Section -->
+            <div class="px-3 px-md-5 pb-5">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <div class="feature-icon icon-blue">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <h3 class="feature-title">أمان وموثوقية</h3>
+                            <p class="feature-text">نظام مراقبة زمني تفاعلي يحلل الجلسة بدقة ويكتشف محاولات الغش وتغيير النوافذ بصورة لحظية.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <div class="feature-icon icon-emerald">
+                                <i class="bi bi-diagram-3"></i>
+                            </div>
+                            <h3 class="feature-title">هيكلية مرنة</h3>
+                            <p class="feature-text">بنية هرمية متقدمة تربط الكليات والأقسام والمقررات الدراسية لتوفير بيئة إدارية مترابطة وسلسة.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <div class="feature-icon icon-amber">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <h3 class="feature-title">تقارير وتحليلات</h3>
+                            <p class="feature-text">إحصائيات شاملة لأداء الطلاب تسمح للعمادة باتخاذ قرارات صحيحة مبنية على تحليل دقيق للنتائج والمعطيات.</p>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
             </div>
         </div>
 
-        <!-- Contact Section -->
-        <div class="col-lg-5">
-            <h3 class="mb-4"><i class="bi bi-envelope-at-fill me-2 text-primary"></i>تواصل معنا</h3>
-            <div class="card-panel p-4 bg-light border-0">
-                <p class="mb-4 text-muted">لديك استفسار أو واجهت مشكلة تقنية؟ فريق الدعم الفني متواجد لمساعدتك.</p>
-                
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-white p-2 rounded-3 shadow-sm me-3">
-                        <i class="bi bi-geo-alt-fill text-danger fs-4"></i>
+        <!-- Lower Content: FAQ & Contact -->
+        <div class="row g-5">
+            
+            <!-- FAQS -->
+            <div class="col-lg-7">
+                <h3 class="section-title"><i class="bi bi-patch-question-fill"></i> الأسئلة الشائعة</h3>
+                <div class="accordion premium-accordion" id="faqAccordion">
+                    {% for faq in faqs %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#faq-{{ forloop.counter }}">
+                                {{ faq.q }}
+                            </button>
+                        </h2>
+                        <div id="faq-{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ faq.a }}
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="small fw-bold">الموقع</div>
-                        <div class="text-muted small">جامعة تكنولوجيا المعلومات - المبنى الرئيسي</div>
-                    </div>
+                    {% endfor %}
                 </div>
+            </div>
 
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-white p-2 rounded-3 shadow-sm me-3">
-                        <i class="bi bi-telephone-fill text-success fs-4"></i>
+            <!-- Contact -->
+            <div class="col-lg-5">
+                <h3 class="section-title"><i class="bi bi-envelope-paper-heart"></i> فريق الدعم الفني</h3>
+                <div class="contact-glass">
+                    <p class="text-muted mb-4 pb-2" style="font-size: 1.05rem; line-height: 1.7;">
+                        هل تواجه تحدياً فنياً أو لديك استفسار يخص النظام؟ فريقنا متاح على مدار الساعة لمساعدتك ودعمك.
+                    </p>
+                    
+                    <div class="contact-row">
+                        <div class="c-icon location"><i class="bi bi-geo-alt-fill"></i></div>
+                        <div>
+                            <div class="c-title">موقع العمادة</div>
+                            <div class="c-desc">جامعة تكنولوجيا المعلومات - المبنى المركزي</div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="small fw-bold">الهاتف</div>
-                        <div class="text-muted small">800-UNIV-EXAM</div>
-                    </div>
-                </div>
 
-                <div class="d-flex align-items-center mb-4">
-                    <div class="bg-white p-2 rounded-3 shadow-sm me-3">
-                        <i class="bi bi-envelope-fill text-primary fs-4"></i>
+                    <div class="contact-row">
+                        <div class="c-icon phone"><i class="bi bi-telephone-inbound-fill"></i></div>
+                        <div>
+                            <div class="c-title">الخط المباشر</div>
+                            <div class="c-desc" dir="ltr">800-UNIV-EXAM</div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="small fw-bold">البريد الإلكتروني</div>
-                        <div class="text-muted small">support@univ-exam.edu</div>
-                    </div>
-                </div>
 
-                <div class="pt-3 border-top">
-                    <div class="d-flex gap-2">
-                        <a href="#" class="btn btn-outline-dark btn-sm rounded-circle"><i class="bi bi-github"></i></a>
-                        <a href="#" class="btn btn-outline-primary btn-sm rounded-circle"><i class="bi bi-linkedin"></i></a>
-                        <a href="#" class="btn btn-outline-info btn-sm rounded-circle text-white"><i class="bi bi-twitter"></i></a>
+                    <div class="contact-row">
+                        <div class="c-icon email"><i class="bi bi-envelope-at-fill"></i></div>
+                        <div>
+                            <div class="c-title">البريد الإلكتروني للشكاوى</div>
+                            <div class="c-desc">support@univ-exam.edu</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mt-4 pt-4 border-top justify-content-center">
+                        <a href="#" class="social-btn-premium" title="Github"><i class="bi bi-github"></i></a>
+                        <a href="#" class="social-btn-premium" title="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="social-btn-premium" title="Twitter/X"><i class="bi bi-twitter-x"></i></a>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
