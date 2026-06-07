@@ -49,6 +49,21 @@
                             </div>
                             
                             {% if request.user.profile.role == 'admin' %}
+                            <div class="col-md-12 mt-3">
+                                <label class="form-label text-warning" style="font-weight: 600;"><i class="bi bi-key-fill"></i> كلمة المرور للوصول (آخر كلمة مرور مولدة)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control bg-body-secondary border-0 text-muted" value="{{ edit_user.profile.generated_password|default:'لم تُسجل أو تم تغييرها يدوياً من قبل المستخدم' }}" readonly>
+                                    {% if edit_user.profile.generated_password %}
+                                    <button class="btn btn-outline-secondary border-0 bg-body-secondary" type="button" onclick="navigator.clipboard.writeText('{{ edit_user.profile.generated_password }}'); this.innerHTML='<i class=\'bi bi-check2 text-success\'></i> تم النسخ'; setTimeout(()=>this.innerHTML='<i class=\'bi bi-copy\'></i> نسخ', 2000);" title="نسخ كلمة المرور">
+                                        <i class="bi bi-copy"></i> نسخ
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted mt-1 d-block">هذه هي أحدث كلمة مرور تم توليدها بواسطة النظام (أثناء الإضافة أو إعادة التعيين). إذا قام المستخدم بتغييرها بنفسه فلن تظهر هنا.</small>
+                            </div>
+                            {% endif %}
+                            
+                            {% if request.user.profile.role == 'admin' %}
                             <div class="col-12 mt-3">
                                 <label class="form-label mb-2" style="font-weight: 600;">الصلاحيات المسموحة لهذا الحساب</label>
                                 <div class="d-flex flex-wrap gap-3 p-3 bg-body-secondary rounded-3 border-0">

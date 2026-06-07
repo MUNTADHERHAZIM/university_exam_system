@@ -313,6 +313,16 @@
         background: #334155 !important;
         color: #60a5fa !important;
     }
+    body.dark-mode .premium-glass-light {
+        background: rgba(30, 41, 59, 0.85) !important; /* var(--surface) */
+        border-color: rgba(255, 255, 255, 0.1) !important; /* var(--glass-border) */
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255,255,255,0.05) !important;
+    }
+    body.dark-mode .about-page-wrapper {
+        background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.1), transparent 50%),
+                    radial-gradient(circle at bottom left, rgba(217, 119, 6, 0.1), transparent 50%),
+                    var(--background) !important;
+    }
 
 </style>
 {% endblock %}
